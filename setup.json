@@ -1,6 +1,6 @@
 {
   "name": "sql-query",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Write queries in SQL.",
   "url": "https://gitlab.com/blackearth/sql-query",
   "author": "Sean Harrison",
