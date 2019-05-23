@@ -31,16 +31,11 @@ class SQL:
 
         sql = ' '.join([str(q) for q in flatten(self.query)])
         rendered = sql.format(
-            fields=self.fields(keys=varnames, dialect=dialect),
-            varnames=self.varnames(keys=varnames, dialect=dialect),
-            updates=self.updates(keys=varnames, dialect=dialect),
-            filters=self.filters(keys=keys, dialect=dialect),
             keys=', '.join(keys),
-
-            # DANGER of SQL injection
-            # -- ONLY to include custom keys or values (as in complex nested queries)
-            values=', '.join("%r" % val for val in values),
-            keys_values=self.keys_values(keys=keys, values=values)
+            filters=self.filters(keys=keys, dialect=dialect),
+            varnames=self.varnames(keys=varnames, dialect=dialect),
+            fields=self.fields(keys=varnames, dialect=dialect),
+            updates=self.updates(keys=varnames, dialect=dialect),
         )
 
         return rendered
@@ -74,18 +69,6 @@ class SQL:
 
     def filters(self, keys=None, dialect=None):
         return " AND ".join(self.assignments(keys=keys, dialect=dialect))
-
-    def conflict_updates(self, keys=None, dialect=None):
-        if keys is None:
-            keys = list(self.params.keys())
-        return ', '.join("%s = EXCLUDED.%s" % (key, key) for key in keys)
-
-    def keys_values(self, keys=None, values=None):
-        if keys is None:
-            keys = list(self.params.keys())
-        if values is None:
-            values = list(val for key, val in self.params.items() if key in keys)
-        return ', '.join("%s = %r" % (key, val) for key, val in zip(keys, values))
 
     def assignments(self, keys=None, dialect=None):
         if keys is None:
