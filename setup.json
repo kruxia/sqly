@@ -1,13 +1,13 @@
 {
   "name": "sql-query",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Write queries in SQL.",
   "url": "https://github.com/blackearth/sql-query",
   "author": "Sean Harrison",
   "author_email": "sah@bookgenesis.com",
   "license": "MPL 2.0",
   "classifiers": [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
     "Programming Language :: Python :: 3"
