@@ -8,6 +8,8 @@ class SQL:
     query: list = field(default_factory=list)
     params: dict = field(default_factory=dict)
     dialect: str = field(default=':var')
+    pk: list = field(default_factory=list)
+    relation: str = field(default='')
 
     def __post_init__(self):
         # allow the query to be a single string
@@ -17,20 +19,29 @@ class SQL:
     def __str__(self):
         return self.render()
 
-    def render(self, params=None, keys=None, varnames=None, values=None, dialect=None):
+    def render(self,
+               params=None,
+               keys=None,
+               varnames=None,
+               values=None,
+               relation=None,
+               dialect=None):
         if params is None:
             params = self.params
         if keys is None:
-            keys = list(params.keys())
+            keys = self.pk or list(params.keys())
         if varnames is None:
             varnames = list(params.keys())
         if values is None:
             values = list(val for key, val in params.items())
+        if relation is None:
+            relation = self.relation
         if dialect is None:
             dialect = self.dialect
 
         sql = ' '.join([str(q) for q in flatten(self.query)])
         rendered = sql.format(
+            relation=relation,
             keys=', '.join(keys),
             filters=self.filters(keys=keys, dialect=dialect),
             varnames=self.varnames(keys=varnames, dialect=dialect),
@@ -94,17 +105,17 @@ class SQL:
     def keys(self, keys=None):
         if keys is None:
             keys = list(self.params.keys())
-        return (key for key in self.params.keys() if key in keys)
+        return [key for key in self.params.keys() if key in keys]
 
     def values(self, keys=None):
         if keys is None:
             keys = list(self.params.keys())
-        return (value for key, value in self.params.items() if key in keys)
+        return [value for key, value in self.params.items() if key in keys]
 
     def items(self, keys=None):
         if keys is None:
             keys = list(self.params.keys())
-        return ((key, value) for key, value in self.params.items() if key in keys)
+        return [(key, value) for key, value in self.params.items() if key in keys]
 
     def dict(self, keys=None):
         if keys is None:
