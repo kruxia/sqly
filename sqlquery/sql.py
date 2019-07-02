@@ -1,15 +1,16 @@
 from dataclasses import dataclass, field
 from .dialects import Dialects
-from .lib import flatten
+from .lib import walk_list
 
 
 @dataclass
 class SQL:
     query: list = field(default_factory=list)
-    params: dict = field(default_factory=dict)
-    dialect: str = field(default=':var')
-    pk: list = field(default_factory=list)
+    fields: list = field(default_factory=list)
     relation: str = field(default='')
+    keys: list = field(default_factory=list)
+    updates: list = field(default_factory=list)
+    dialect: str = field(default=Dialects.EMBEDDED)
 
     def __post_init__(self):
         # allow the query to be a single string
@@ -19,105 +20,51 @@ class SQL:
     def __str__(self):
         return self.render()
 
-    def render(self,
-               params=None,
-               keys=None,
-               varnames=None,
-               values=None,
-               relation=None,
-               dialect=None):
-        if params is None:
-            params = self.params
-        if keys is None:
-            keys = self.pk or list(params.keys())
-        if varnames is None:
-            varnames = list(params.keys())
-        if values is None:
-            values = list(val for key, val in params.items())
-        if relation is None:
-            relation = self.relation
-        if dialect is None:
-            dialect = self.dialect
-
-        sql = ' '.join([str(q) for q in flatten(self.query)])
-        rendered = sql.format(
-            relation=relation,
-            keys=', '.join(keys),
-            filters=self.filters(keys=keys, dialect=dialect),
-            varnames=self.varnames(keys=varnames, dialect=dialect),
-            fields=self.fields(keys=varnames, dialect=dialect),
-            updates=self.updates(keys=varnames, dialect=dialect),
+    def render(self):
+        query_string = ' '.join([str(q) for q in walk_list(self.query)])
+        rendered = query_string.format(
+            fields=', '.join(self.fields),
+            relation=self.relation,
+            keys=', '.join(self.keys),
+            vars=self.vars_string(),
+            filters=self.filters_string(),
+            updates=self.updates_string(),
         )
-
         return rendered
 
-    def fields(self, keys=None, dialect=None):
-        if keys is None:
-            keys = list(self.params.keys())
-        return ', '.join(key for key in keys)
-
-    def varnames(self, keys=None, dialect=None):
-        if keys is None:
-            keys = list(self.params.keys())
-        if dialect is None:
-            dialect = self.dialect
-
-        if dialect in Dialects.POSTGRES.value:
-            items = ["$%d" % index for index in range(1, len(keys) + 1)]
-        elif dialect in Dialects.MYSQL.value:
-            items = ["%%(%s)s" % key for key in keys]
-        elif dialect in Dialects.EMBEDDED.value:
-            items = [":%s" % key for key in keys]
-        elif dialect in Dialects.SQLITE.value:
-            items = ["?" for key in keys]
+    def vars_string(self):
+        if self.dialect in Dialects.POSTGRES.value:
+            items = ["$%d" % index for index in range(1, len(self.fields) + 1)]
+        elif self.dialect in Dialects.MYSQL.value:
+            items = ["%%(%s)s" % field for field in self.fields]
+        elif self.dialect in Dialects.EMBEDDED.value:
+            items = [":%s" % field for field in self.fields]
+        elif self.dialect in Dialects.SQLITE.value:
+            items = ["?" for field in self.fields]
         else:
-            raise ValueError('Dialect %r not in Dialects' % dialect)
+            raise ValueError('Dialect %r not in Dialects' % self.dialect)
 
         return ", ".join(items)
 
-    def updates(self, keys=None, dialect=None):
-        return ", ".join(self.assignments(keys=keys, dialect=dialect))
+    def updates_string(self):
+        return ", ".join(self.assignments(fields=self.updates))
 
-    def filters(self, keys=None, dialect=None):
-        return " AND ".join(self.assignments(keys=keys, dialect=dialect))
+    def filters_string(self):
+        return " AND ".join(self.assignments(fields=self.keys))
 
-    def assignments(self, keys=None, dialect=None):
-        if keys is None:
-            keys = list(self.params.keys())
-        if dialect is None:
-            dialect = self.dialect
+    def assignments(self, fields=None):
+        if fields is None:
+            fields = self.fields
 
-        if dialect in Dialects.POSTGRES.value:
-            items = ["%s=$%d" % (key, index + 1) for index, key in enumerate(keys)]
-        elif dialect in Dialects.MYSQL.value:
-            items = ["%s=%%(%s)s" % (key, key) for key in keys]
-        elif dialect in Dialects.EMBEDDED.value:
-            items = ["%s=:%s" % (key, key) for key in keys]
-        elif dialect in Dialects.SQLITE.value:
-            items = ["%s=?" % key for key in keys]
+        if self.dialect in Dialects.POSTGRES.value:
+            items = ["%s=$%d" % (field, list(self.fields).index(field) + 1) for field in fields]
+        elif self.dialect in Dialects.MYSQL.value:
+            items = ["%s=%%(%s)s" % (field, field) for field in fields]
+        elif self.dialect in Dialects.EMBEDDED.value:
+            items = ["%s=:%s" % (field, field) for field in fields]
+        elif self.dialect in Dialects.SQLITE.value:
+            items = ["%s=?" % field for field in fields]
         else:
-            raise ValueError('Dialect %r not in Dialects' % dialect)
+            raise ValueError('Dialect %r not in Dialects' % self.dialect)
 
         return items
-
-    # standard mapping methods, optionally filtered
-
-    def keys(self, keys=None):
-        if keys is None:
-            keys = list(self.params.keys())
-        return [key for key in self.params.keys() if key in keys]
-
-    def values(self, keys=None):
-        if keys is None:
-            keys = list(self.params.keys())
-        return [value for key, value in self.params.items() if key in keys]
-
-    def items(self, keys=None):
-        if keys is None:
-            keys = list(self.params.keys())
-        return [(key, value) for key, value in self.params.items() if key in keys]
-
-    def dict(self, keys=None):
-        if keys is None:
-            keys = list(self.params.keys())
-        return {key: value for key, value in self.params.items() if key in keys}
