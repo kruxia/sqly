@@ -1,10 +1,10 @@
 {
-  "name": "sql-query",
-  "version": "0.4.1",
-  "description": "Write queries in SQL.",
-  "url": "https://github.com/blackearth/sql-query",
+  "name": "sqly",
+  "version": "0.1.0",
+  "description": "Use SQL. Be sqly.",
+  "url": "https://github.com/BlackEarth/sqly",
   "author": "Sean Harrison",
-  "author_email": "sah@bookgenesis.com",
+  "author_email": "sah@blackearth.us",
   "license": "MPL 2.0",
   "classifiers": [
     "Development Status :: 3 - Alpha",
