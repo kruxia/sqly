@@ -18,9 +18,9 @@ class Dialects(Enum):
         pattern = r"(?<!\\):(\w+)\b"
         fields = []
 
-        def replace(match):
+        def replace_parameter(match):
             field = match.group(1)
-            if field not in fields:
+            if self in [self.SQLITE, self.POSTGRES] or field not in fields:
                 fields.append(field)
 
             if self is self.EMBEDDED:
@@ -35,6 +35,7 @@ class Dialects(Enum):
                 raise ValueError('Dialect %r not in Dialects' % self.dialect)
 
         rendered_query_string = re.sub(pattern, replace, query_string)
+        rendered_query_string = re.sub(pattern, replace_parameter, query_string)
 
         if self is not self.EMBEDDED:
             # replace \:word with :word because the colon-escape is no longer needed.
