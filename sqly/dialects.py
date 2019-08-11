@@ -15,7 +15,7 @@ class Dialects(Enum):
 
     def render(self, query_string, data):
         """render a query_string and its parameter values for this dialect."""
-        pattern = r":(\w+)\b"
+        pattern = r"(?<!\\):(\w+)\b"
         fields = []
 
         def replace(match):
@@ -35,6 +35,10 @@ class Dialects(Enum):
                 raise ValueError('Dialect %r not in Dialects' % self.dialect)
 
         rendered_query_string = re.sub(pattern, replace, query_string)
+
+        if self is not self.EMBEDDED:
+            # replace \:word with :word because the colon-escape is no longer needed.
+            rendered_query_string = re.sub(r"\\:(\w+)\b", r":\1", rendered_query_string)
 
         if self in [self.EMBEDDED, self.MYSQL]:
             parameter_values = {field: data[field] for field in fields}
