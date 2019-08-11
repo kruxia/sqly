@@ -34,7 +34,10 @@ class Dialects(Enum):
             else:
                 raise ValueError('Dialect %r not in Dialects' % self.dialect)
 
-        rendered_query_string = re.sub(pattern, replace, query_string)
+        if self is self.MYSQL:
+            # any % must be intended as literal and must be doubled
+            query_string = query_string.replace('%', '%%')
+
         rendered_query_string = re.sub(pattern, replace_parameter, query_string)
 
         if self is not self.EMBEDDED:
