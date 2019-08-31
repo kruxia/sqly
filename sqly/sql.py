@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+
 from .dialects import Dialects
 from .lib import walk_list
 
