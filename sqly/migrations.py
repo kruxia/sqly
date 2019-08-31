@@ -1,9 +1,3 @@
-"""
-* [ ] init APP - initialize the app for sqly migrations
-* [ ] create [LABEL] - create a schema with the given LABEL or none
-* [ ] migrate [NAME] - migrate the schema to a given NAME, or to the latest revision
-* [ ] test [NAME] - test the given migration, or all migrations
-"""
 import os
 import re
 from datetime import datetime
