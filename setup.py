@@ -1,6 +1,8 @@
-import os, json
-from setuptools import setup, find_packages
+import json
+import os
 from codecs import open
+
+from setuptools import find_packages, setup
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -15,4 +17,5 @@ if __name__ == '__main__':
         long_description=README,
         long_description_content_type='text/markdown',
         packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-        **CONFIG)
+        **CONFIG
+    )
