@@ -5,7 +5,6 @@ from importlib import import_module
 from pathlib import Path
 
 import click
-
 import yaml
 
 DB_REL_PATH = 'db'
@@ -23,9 +22,7 @@ def init_app(mod_name):
         path = mod_path / pathname
         if not path.exists():
             os.makedirs(path)
-    return create_migration(
-        mod_name, label='init', additional_requires=['sqly:00000000000000_init']
-    )
+    return create_migration(mod_name, label='init')
 
 
 def get_mod_filepath(mod_name):
@@ -74,7 +71,7 @@ def create_migration(mod_name, label=None, additional_requires=None, then_load=N
     assert migration_name not in migrations_data
     mod_filepath = get_mod_filepath(mod_name)
     migrations_data_path = mod_filepath / DB_REL_PATH / 'migrations'
-    requires = []
+    requires = last_migrations(migrations_data)
     requires += additional_requires or []
     migrations_data[migration_name] = {'requires': requires}
     if then_load:
@@ -85,6 +82,48 @@ def create_migration(mod_name, label=None, additional_requires=None, then_load=N
         f.write(f'-- \n'.encode('utf-8'))
     dump_migrations_data(mod_name, migrations_data)
     return migration_name
+
+
+def sequence_migrations(data):
+    """for a given set up migrations_data, sequence the migrations in apply order"""
+
+    def get_migration_position(name):
+        if name not in data or not data[name].get('requires'):
+            return 0, name
+        else:
+            pos = (
+                max(
+                    [
+                        get_migration_position(req_name)[0]
+                        for req_name in data[name]['requires']
+                    ]
+                )
+                + 1
+            )
+        return pos, name
+
+    seq = sorted([get_migration_position(name) for name in data.keys()])
+    return seq
+
+
+def migrations_descendants(data):
+    descendants = {}
+    for name in data:
+        descendants[name] = []
+    for pos, name in sequence_migrations(data):
+        requires = data[name].get('requires') or []
+        if isinstance(requires, str):
+            requires = [requires]
+        for req_name in requires:
+            descendants.setdefault(req_name, [])
+            descendants[req_name].append(name)
+    return descendants
+
+
+def last_migrations(data):
+    """return a list of migration names that have no descendants"""
+    descendants = migrations_descendants(data)
+    return sorted([name for name in descendants.keys() if not descendants[name]])
 
 
 @click.group()
