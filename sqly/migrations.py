@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import re
-import sys
 from datetime import datetime
 from importlib import import_module
 from pathlib import Path
@@ -11,8 +10,8 @@ from pathlib import Path
 import click
 import yaml
 
-from .sql import SQL
 from .dialects import Dialects
+from .sql import SQL
 
 DB_REL_PATH = 'db'
 log = logging.getLogger(__name__)
@@ -255,8 +254,8 @@ async def apply_migration_up(db_settings, conn, data, filepath, mod_name, name):
                 print(to_load_filepath, '=>', ext)
                 if ext == '.sql':
                     await load_sql_file(conn, to_load_filepath)
-                elif ext in ['.yaml', '.yml']:
-                    await load_yaml_file(conn, to_load_filepath)
+                elif ext in ['.json', '.yaml', '.yml']:
+                    await load_data_file(conn, to_load_filepath)
 
 
 async def load_sql_file(conn, filepath):
@@ -266,36 +265,43 @@ async def load_sql_file(conn, filepath):
     log.debug('  %s' % result)
 
 
-async def load_yaml_file(conn, filepath):
+async def load_data_file(conn, filepath):
+    ext = os.path.splitext(filepath)[-1].lower()
     with open(filepath, 'rb') as f:
-        data = yaml.safe_load(f.read().decode('utf-8'))
-        table = data['table']
-        records = data['records']
-        primary_key = data.get('primary_key') or data.get('pk') or data.get('key') or []
-        if isinstance(primary_key, str):
-            primary_key = [primary_key]
+        if ext == '.json':
+            data = json.load(f)
+        elif ext in ['.yaml', '.yml']:
+            data = yaml.safe_load(f.read().decode('utf-8'))
+        else:
+            raise ValueError(f'Unsupported file extension: {ext}')
+
+    table = data['table']
+    records = data['records']
+    primary_key = data.get('primary_key') or data.get('pk') or data.get('key') or []
+    if isinstance(primary_key, str):
+        primary_key = [primary_key]
     print(table, primary_key, len(records), 'records')
+
+    query = SQL(
+        [
+            # behold UPSERT (postgresql and sqlite).
+            'INSERT INTO {table} ({fields}) VALUES ({params})',
+            'ON CONFLICT ({keys}) DO UPDATE SET {assigns_excluded}',
+            'RETURNING *',
+        ],
+        dialect=SQL_DIALECT,
+    )
     for record in records:
-        # upsert
-        for key in record:
-            if isinstance(record[key], dict):
-                record[key] = json.dumps(record[key])
-        query = SQL(
-            [
-                "INSERT INTO %s ({fields}) VALUES ({params})" % table,
-                "ON CONFLICT ({keys}) DO UPDATE SET",
-                ', '.join(
-                    f"{key}=EXCLUDED.{key}"
-                    for key in record.keys()
-                    if key not in primary_key
-                ),
-                "RETURNING *",
-            ],
-            dialect=SQL_DIALECT,
-            fields=record.keys(),
+        sql, values = query.render(
+            record,
             keys=primary_key,
+            table=table,
+            assigns_excluded=', '.join(
+                f'{key}=EXCLUDED.{key}'
+                for key in record.keys()
+                if key not in primary_key
+            ),
         )
-        sql, values = query.render(record)
         print(sql, values)
         result = await conn.execute(sql, *values)
         log.debug(result)
