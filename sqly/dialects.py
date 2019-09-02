@@ -21,6 +21,10 @@ class Dialects(Enum):
     SQLALCHEMY = 'sqlalchemy'
 
     @property
+    def supports_returning(self):
+        return self in [self.POSTGRES, self.PSYCOPG2, self.ASYNCPG]
+
+    @property
     def output_format(self):
         return {
             self.EMBEDDED: OutputFormats.COLON_PARAM,
