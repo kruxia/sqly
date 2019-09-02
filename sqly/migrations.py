@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+import sys
 from datetime import datetime
 from importlib import import_module
 from pathlib import Path
@@ -11,11 +12,12 @@ import click
 import yaml
 
 from sqly import queries
+from sqly.connection import connection_run, get_connection, get_database_settings
 from sqly.dialects import Dialects
 
 DB_REL_PATH = 'db'
-log = logging.getLogger(__name__)
 SQL_DIALECT = Dialects.ASYNCPG
+log = logging.getLogger(__name__)
 
 
 def init_app(mod_name):
@@ -71,11 +73,12 @@ def dump_migrations_data(mod_name, migrations_data):
 
 
 def make_migration_name(label=None):
-    name = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_"
-    if label:
-        name += re.sub(r'\W', '_', label.strip()).strip('_')
+    if label is None:
+        label = 'auto'
     else:
-        name += 'auto'
+        label = re.sub(r'\W', '_', label.strip()).strip('_')
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    name = f"{timestamp}_{label}"
     return name
 
 
@@ -86,7 +89,7 @@ def create_migration(mod_name, label=None, additional_requires=None, then_load=N
     assert migration_name not in migrations_data
     mod_filepath = get_mod_filepath(mod_name)
     migrations_data_path = mod_filepath / DB_REL_PATH / 'migrations'
-    requires = last_migrations(migrations_data)
+    requires = tail_migrations(migrations_data)
     requires += additional_requires or []
     migrations_data[migration_name] = {'requires': requires}
     if then_load:
@@ -118,14 +121,14 @@ def sequence_migrations(data):
     return seq
 
 
-def requirements(data, name):
+def migration_requirements(data, name):
     """generate a sequence of requirements for this migration in apply order"""
     requires = data.get(name, {}).get('requires') or []
     if isinstance(requires, str):
         requires = [requires]
     yielded = []
     for req_name in requires:
-        for req in requirements(data, req_name):
+        for req in migration_requirements(data, req_name):
             if req not in yielded:
                 yield req
                 yielded.append(req)
@@ -135,6 +138,7 @@ def requirements(data, name):
 
 
 def migrations_descendants(data):
+    """return a list of descendants for each migration in data."""
     descendants = {}
     for name in data:
         descendants[name] = []
@@ -148,80 +152,82 @@ def migrations_descendants(data):
     return descendants
 
 
-def last_migrations(data):
+def tail_migrations(data):
     """return a list of migration names that have no descendants"""
     descendants = migrations_descendants(data)
     return sorted([name for name in descendants.keys() if not descendants[name]])
 
 
-async def apply_migrations(db_settings, mod_name, names=None, down=True, conn=None):
+def get_applied_migrations(conn):
+    try:
+        applied_migrations = connection_run(
+            conn.fetch("select * from __migrations order by run_at")
+        )
+    except Exception:
+        print(sys.exc_info()[1])
+        applied_migrations = []
+
+    return applied_migrations
+
+
+def apply_migrations(conn, mod_name, names=None, down=True):
     filepath = get_mod_filepath(mod_name) / DB_REL_PATH / 'migrations'
     data = load_migrations_data(mod_name)
 
-    if not conn:
-        asyncpg = import_module('asyncpg')
-        conn = await asyncpg.connect(dsn=db_settings['dsn'])
-        await conn.set_type_codec(
-            'json', encoder=json.dumps, decoder=json.loads, schema='pg_catalog'
-        )
+    applied_migrations = get_applied_migrations(conn)
+    applied_migrations_names = [migration['name'] for migration in applied_migrations]
 
-    try:
-        applied_migrations = [
-            migration['name']
-            for migration in await conn.fetch(
-                "select * from __migrations order by run_at"
-            )
-        ]
-    except:
-        applied_migrations = []
+    log.debug('applied_migrations = %r' % applied_migrations_names)
 
-    log.debug('applied_migrations = %r' % applied_migrations)
-
+    # ensure that the given migrations are a list; default to the tail_migrations
     if not names:
-        names = last_migrations(data)
-    if isinstance(names, str):
+        names = tail_migrations(data)
+    elif isinstance(names, str):
         names = [names]
 
     log.debug('names = %r' % names)
 
-    names_sequence = [seq[1] for seq in sequence_migrations(data)]
-    log.debug('names_sequence = %r' % names_sequence)
-
-    # revert any descendants of the named migrations
     if down:
-        all_descendants = migrations_descendants(data)
-        descendants = set()
-        for name in names:
-            descendants |= set(all_descendants[name])
-        for name in reversed(names_sequence):
-            if name in descendants:
-                await apply_migration_dn(
-                    db_settings, conn, data, filepath, mod_name, name
-                )
-                if name in applied_migrations:
-                    applied_migrations.pop(applied_migrations.index(name))
+        # revert any descendants of the named migrations
+        applied_migrations = revert_migrations_descendants(
+            conn, data, mod_name, names, filepath, applied_migrations
+        )
 
     # apply any ancestors of the named migrations, and the migrations themselves
     to_apply = []
     for name in names:
-        requires = list(requirements(data, name))
+        requires = list(migration_requirements(data, name))
         for req in requires:
-            if req not in to_apply and req not in applied_migrations:
+            if req not in to_apply and req not in applied_migrations_names:
                 to_apply.append(req)
     for name in names:
-        if name not in to_apply and name not in applied_migrations:
+        if name not in to_apply and name not in applied_migrations_names:
             to_apply.append(name)
 
     for name in to_apply:
-        await apply_migration_up(db_settings, conn, data, filepath, mod_name, name)
+        apply_up_migration(conn, data, filepath, mod_name, name)
 
 
-async def apply_migration_up(db_settings, conn, data, filepath, mod_name, name):
+def revert_migrations_descendants(
+    conn, data, mod_name, names, filepath, applied_migrations
+):
+    names_sequence = [seq[1] for seq in sequence_migrations(data)]
+    all_descendants = migrations_descendants(data)
+    descendants = set()
+    for name in names:
+        descendants |= set(all_descendants[name])
+    for name in reversed(names_sequence):
+        if name in descendants and name in applied_migrations:
+            connection_run(apply_dn_migration(conn, data, mod_name, name, filepath))
+            applied_migrations.pop(applied_migrations[name])
+    return applied_migrations
+
+
+def apply_up_migration(conn, data, filepath, mod_name, name):
     if ':' in name:
+        # ensure that the migration in the other module is applied, without migrating down
         other_mod_name, migration_name = name.split(':')
-        await apply_migrations(
-            db_settings, other_mod_name, migration_name, conn=conn, down=False
-        )
+        apply_migrations(conn, other_mod_name, migration_name, down=False)
     else:
         log.info(f"{mod_name}:{name}:")
         migration_path = filepath / (name + '.up.sql')
@@ -230,41 +236,67 @@ async def apply_migration_up(db_settings, conn, data, filepath, mod_name, name):
             requires = [requires]
         with open(migration_path, 'rb') as f:
             sql = f.read().decode('utf-8').strip()
-        async with conn.transaction():
-            log.debug('\n   %s' % sql.replace('\n', '\n  '))
-            if sql:
-                result = await conn.execute(sql)
-                log.debug('  %s' % result)
-            result = await conn.fetchrow(
+
+        connection_run(conn.execute('BEGIN'))
+
+        log.debug('\n   %s' % sql.replace('\n', '\n  '))
+        if sql:
+            result = connection_run(conn.execute(sql))
+            log.debug('  %s' % result)
+        result = connection_run(
+            conn.fetchrow(
                 "insert into __migrations (mod, name, requires) values ($1, $2, $3) returning *",
                 mod_name,
                 name,
                 requires,
             )
-            log.info('    %s' % yaml.dump(dict(**result)).replace('\n', '\n    '))
-            then_load = data[name].get('then_load') or []
-            if isinstance(then_load, str):
-                then_load = [then_load]
-            for to_load in then_load:
-                log.info('  %s' % to_load)
-                to_load_filepath = os.path.abspath(
-                    os.path.join(migration_path.parent, to_load)
-                )
-                ext = os.path.splitext(to_load_filepath)[-1].lower()
-                if ext == '.sql':
-                    await load_sql_file(conn, to_load_filepath)
-                elif ext in ['.json', '.yaml', '.yml']:
-                    await load_data_file(conn, to_load_filepath)
+        )
+        log.info('    %s' % yaml.dump(dict(**result)).replace('\n', '\n    '))
+        then_load = data[name].get('then_load') or []
+        if isinstance(then_load, str):
+            then_load = [then_load]
+        for to_load in then_load:
+            log.info('  %s' % to_load)
+            to_load_filepath = os.path.abspath(
+                os.path.join(migration_path.parent, to_load)
+            )
+            ext = os.path.splitext(to_load_filepath)[-1].lower()
+            if ext == '.sql':
+                load_sql_file(conn, to_load_filepath)
+            elif ext in ['.json', '.yaml', '.yml']:
+                load_data_file(conn, to_load_filepath)
+
+        connection_run(conn.execute('COMMIT'))
 
 
-async def load_sql_file(conn, filepath):
+def apply_dn_migration(conn, data, mod_name, name, filepath):
+    migration_path = filepath / (name + '.dn.sql')
+    with open(migration_path, 'rb') as f:
+        sql = f.read().decode('utf-8').strip()
+
+    connection_run(conn.execute('BEGIN'))
+
+    if sql:
+        result = connection_run(conn.execute(sql))
+        log.info('   ', result.replace('\n', '\n    '))
+    result = connection_run(
+        conn.fetchrow(
+            "delete from __migrations where mod=$1 and name=$2", mod_name, name
+        )
+    )
+    log.info('   ', result.replace('\n', '\n    '))
+
+    connection_run(conn.execute('COMMIT'))
+
+
+def load_sql_file(conn, filepath):
     with open(filepath, 'rb') as f:
         sql = f.read().decode('utf-8')
-    result = await conn.execute(sql)
+    result = connection_run(conn.execute(sql))
     log.debug('  %s' % result)
 
 
-async def load_data_file(conn, filepath):
+def load_data_file(conn, filepath):
     ext = os.path.splitext(filepath)[-1].lower()
     with open(filepath, 'rb') as f:
         if ext == '.json':
@@ -285,32 +317,8 @@ async def load_data_file(conn, filepath):
     for record in records:
         sql, values = query.render(record, keys=primary_key, table=table)
         log.debug(f"{sql!r} {values!r}")
-        result = await conn.execute(sql, *values)
+        result = connection_run(conn.execute(sql, *values))
         log.debug(result)
-
-
-async def apply_migration_dn(db_settings, conn, data, filepath, mod_name, name):
-    migration_path = filepath / (name + '.dn.sql')
-    with open(migration_path, 'rb') as f:
-        sql = f.read().decode('utf-8').strip()
-    async with conn.transaction():
-        if sql:
-            result = await conn.execute(sql)
-            log.info('   ', result.replace('\n', '\n    '))
-        result = await conn.fetchrow(
-            "delete from __migrations where mod=$1 and name=$2", mod_name, name
-        )
-        log.info('   ', result.replace('\n', '\n    '))
-
-
-def get_database_settings(mod_name, settings_mod_name=None):
-    if not settings_mod_name:
-        settings_mod_name = f"{mod_name}.settings"
-    try:
-        database_settings = import_module(settings_mod_name).DATABASE
-    except:
-        database_settings = {'dsn': f'postgres://localhost/{mod_name.split(".")[0]}'}
-    return database_settings
 
 
 @click.group()
@@ -327,8 +335,6 @@ def init(mod_name, settings_mod_name, log):
     migration_name = init_app(mod_name)
     print(f"sqly migrations: initialized app: {mod_name}")
     print(f"sqly migrations: created migration: {mod_name}:{migration_name}")
-    database_settings = get_database_settings(mod_name, settings_mod_name)
-    asyncio.run(apply_migrations(mod_name, database_settings, migration_name))
 
 
 @main.command()
@@ -349,7 +355,8 @@ def create(mod_name, label, log):
 def migrate(mod_name, settings_mod_name, log, migration_name=None):
     logging.basicConfig(level=log)
     database_settings = get_database_settings(mod_name, settings_mod_name)
-    asyncio.run(apply_migrations(database_settings, mod_name, migration_name))
+    conn = get_connection(database_settings)
+    apply_migrations(conn, mod_name, migration_name)
 
 
 if __name__ == '__main__':
