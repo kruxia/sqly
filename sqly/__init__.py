@@ -1,2 +1,2 @@
-from .dialects import Dialects, DEFAULT_DIALECT
+from .dialects import DEFAULT_DIALECT, Dialects
 from .sql import SQL
