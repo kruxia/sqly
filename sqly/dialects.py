@@ -1,3 +1,4 @@
+import json
 import re
 from enum import Enum
 
@@ -45,8 +46,14 @@ class Dialects(Enum):
             rendered_query_string = re.sub(r"\\:(\w+)\b", r":\1", rendered_query_string)
 
         if self in [self.EMBEDDED, self.MYSQL]:
-            parameter_values = {field: data[field] for field in fields}
+            parameter_values = {
+                key: json.dumps(val) if isinstance(val, dict) else val
+                for key, val in {field: data[field] for field in fields}.items()
+            }
         elif self in [self.SQLITE, self.POSTGRES]:
-            parameter_values = [data[field] for field in fields]
+            parameter_values = [
+                json.dumps(val) if isinstance(val, dict) else val
+                for val in [data[field] for field in fields]
+            ]
 
         return rendered_query_string, parameter_values
