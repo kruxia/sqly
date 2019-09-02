@@ -1,13 +1,13 @@
 from dataclasses import dataclass, field
 
-from sqly.dialects import Dialects
+from sqly.dialects import DEFAULT_DIALECT
 from sqly.lib import walk_list
 
 
 @dataclass
 class SQL:
     query: list = field(default_factory=list)
-    dialect: str = Dialects.EMBEDDED
+    dialect: str = DEFAULT_DIALECT
 
     def __post_init__(self):
         # allow the query to be a single string
@@ -33,7 +33,7 @@ class SQL:
         """
         # Format the query string
         if dialect is None:
-            dialect = self.dialect or Dialects.EMBEDDED
+            dialect = self.dialect or DEFAULT_DIALECT
         if keys is None:
             keys = data.keys()
         if fields is None:
@@ -58,7 +58,6 @@ class SQL:
             **kwargs,
         )
         # Render the query and parameter value with the correct syntax for the dialect
-        dialect = dialect or self.dialect
         rendered_query, parameter_values = dialect.render(formatted_query, data)
         return rendered_query, parameter_values
 

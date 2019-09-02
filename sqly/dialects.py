@@ -93,3 +93,6 @@ class Dialects(Enum):
             )
 
         return rendered_query_string, parameter_values
+
+
+DEFAULT_DIALECT = Dialects.EMBEDDED
