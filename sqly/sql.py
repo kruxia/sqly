@@ -20,11 +20,11 @@ class SQL:
             self.query = [self.query]
 
     def __str__(self):
-        return self.render()
+        return ' '.join([str(q) for q in walk_list(self.query)])
 
     def render(self, data):
         """render the query and its values for a given data input."""
-        query_string = ' '.join([str(q) for q in walk_list(self.query)])
+        query_string = str(self)
         fields = self.fields or data.keys()
         rendered_query, parameter_values = self.dialect.render(
             query_string.format(
