@@ -251,7 +251,6 @@ async def apply_migration_up(db_settings, conn, data, filepath, mod_name, name):
                     os.path.join(migration_path.parent, to_load)
                 )
                 ext = os.path.splitext(to_load_filepath)[-1].lower()
-                print(to_load_filepath, '=>', ext)
                 if ext == '.sql':
                     await load_sql_file(conn, to_load_filepath)
                 elif ext in ['.json', '.yaml', '.yml']:
@@ -280,7 +279,7 @@ async def load_data_file(conn, filepath):
     primary_key = data.get('primary_key') or data.get('pk') or data.get('key') or []
     if isinstance(primary_key, str):
         primary_key = [primary_key]
-    print(table, primary_key, len(records), 'records')
+    log.info(f"{table} {primary_key} {len(records)} records")
 
     query = SQL(
         [
@@ -302,7 +301,7 @@ async def load_data_file(conn, filepath):
                 if key not in primary_key
             ),
         )
-        print(sql, values)
+        log.debug(f"{sql!r} {values!r}")
         result = await conn.execute(sql, *values)
         log.debug(result)
 
