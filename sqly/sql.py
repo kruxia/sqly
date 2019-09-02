@@ -15,7 +15,7 @@ class SQL:
             self.query = [self.query]
 
     def __str__(self):
-        return ' '.join([str(q) for q in walk_list(self.query) if q])
+        return ' '.join([str(q) for q in walk_list(self.query) if q]).strip()
 
     def render(
         self,
@@ -32,15 +32,26 @@ class SQL:
         Render the query and its values for a given data input.
         """
         # Format the query string
-        keys = keys or data.keys()
-        fields = fields or data.keys()
+        if dialect is None:
+            dialect = self.dialect or Dialects.EMBEDDED
+        if keys is None:
+            keys = data.keys()
+        if fields is None:
+            fields = data.keys()
+        if filters is None:
+            filters = self.assigns_list(keys)
+        if assigns is None:
+            assigns = self.assigns_list(fields)
+        if params is None:
+            params = self.params_list(fields)
         query_string = str(self)
         formatted_query = query_string.format(
             keys=', '.join(keys),
             fields=', '.join(fields),
-            filters=' AND '.join(filters or self.assigns_list(keys)),
-            assigns=', '.join(assigns or self.assigns_list(fields)),
-            params=', '.join(params or self.params_list(fields)),
+            filters=' AND '.join(filters),
+            where=f"where {' AND '.join(filters)}" if filters else '',
+            assigns=', '.join(assigns),
+            params=', '.join(params),
             assigns_excluded=', '.join(
                 f'{key}=EXCLUDED.{key}' for key in fields if key not in keys
             ),
@@ -51,12 +62,8 @@ class SQL:
         rendered_query, parameter_values = dialect.render(formatted_query, data)
         return rendered_query, parameter_values
 
-    def params_list(self, fields=None):
-        if not fields:
-            fields = self.fields
+    def params_list(self, fields):
         return [":%s" % field for field in fields]
 
-    def assigns_list(self, fields=None):
-        if not fields:
-            fields = self.fields
+    def assigns_list(self, fields):
         return ["%s=:%s" % (field, field) for field in fields]
