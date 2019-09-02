@@ -12,6 +12,7 @@ import yaml
 
 from .dialects import Dialects
 from .sql import SQL
+from . import queries
 
 DB_REL_PATH = 'db'
 log = logging.getLogger(__name__)
@@ -281,26 +282,9 @@ async def load_data_file(conn, filepath):
         primary_key = [primary_key]
     log.info(f"{table} {primary_key} {len(records)} records")
 
-    query = SQL(
-        [
-            # behold UPSERT (postgresql and sqlite).
-            'INSERT INTO {table} ({fields}) VALUES ({params})',
-            'ON CONFLICT ({keys}) DO UPDATE SET {assigns_excluded}',
-            'RETURNING *',
-        ],
-        dialect=SQL_DIALECT,
-    )
+    query = queries.upsert(dialect=SQL_DIALECT)
     for record in records:
-        sql, values = query.render(
-            record,
-            keys=primary_key,
-            table=table,
-            assigns_excluded=', '.join(
-                f'{key}=EXCLUDED.{key}'
-                for key in record.keys()
-                if key not in primary_key
-            ),
-        )
+        sql, values = query.render(record, keys=primary_key, table=table)
         log.debug(f"{sql!r} {values!r}")
         result = await conn.execute(sql, *values)
         log.debug(result)
