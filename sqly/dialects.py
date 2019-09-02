@@ -39,7 +39,7 @@ class Dialects(Enum):
             # any % must be intended as literal and must be doubled
             query_string = query_string.replace('%', '%%')
 
-        rendered_query_string = re.sub(pattern, replace_parameter, query_string)
+        rendered_query_string = re.sub(pattern, replace_parameter, query_string).strip()
 
         if self is not self.EMBEDDED:
             # replace \:word with :word because the colon-escape is no longer needed.
