@@ -12,12 +12,12 @@ import click
 import yaml
 
 from sqly import queries
-from sqly.connection import connection_run, get_connection, get_database_settings
+from sqly.connection import connection_run, get_connection, get_settings
 from sqly.dialects import Dialects
 
 DB_REL_PATH = 'db'
 SQL_DIALECT = Dialects.ASYNCPG
-log = logging.getLogger(__name__)
+log = logging.getLogger('sqly.migrations')
 
 
 def init_app(mod_name):
@@ -329,9 +329,13 @@ def main():
 @main.command()
 @click.argument('mod_name')
 @click.option('-s', '--settings_mod_name', required=False)
-@click.option('--log', default=logging.INFO)
+@click.option('--log', required=False)
 def init(mod_name, settings_mod_name, log):
-    logging.basicConfig(level=log)
+    settings = get_settings(mod_name, settings_mod_name)
+    logging_settings = settings.LOGGING if hasattr(settings, 'LOGGING') else {}
+    if log:
+        logging_settings.update(level=int(log))
+    logging.basicConfig(**logging_settings)
     migration_name = init_app(mod_name)
     print(f"sqly migrations: initialized app: {mod_name}")
     print(f"sqly migrations: created migration: {mod_name}:{migration_name}")
@@ -340,9 +344,13 @@ def init(mod_name, settings_mod_name, log):
 @main.command()
 @click.argument('mod_name')
 @click.option('-l', '--label', default=None)
-@click.option('--log', default=logging.INFO)
+@click.option('--log', required=False)
 def create(mod_name, label, log):
-    logging.basicConfig(level=log)
+    settings = get_settings(mod_name, settings_mod_name)
+    logging_settings = settings.LOGGING if hasattr(settings, 'LOGGING') else {}
+    if log:
+        logging_settings.update(level=int(log))
+    logging.basicConfig(**logging_settings)
     migration_name = create_migration(mod_name, label=label)
     print(f"sqly migrations: created migration: {mod_name}:{migration_name}")
 
@@ -350,11 +358,15 @@ def create(mod_name, label, log):
 @main.command()
 @click.argument('mod_name')
 @click.option('-s', '--settings_mod_name', required=False)
-@click.option('--log', default=logging.INFO)
+@click.option('--log', required=False)
 @click.argument('migration_name', required=False)
 def migrate(mod_name, settings_mod_name, log, migration_name=None):
-    logging.basicConfig(level=log)
-    database_settings = get_database_settings(mod_name, settings_mod_name)
+    settings = get_settings(mod_name, settings_mod_name)
+    logging_settings = settings.LOGGING if hasattr(settings, 'LOGGING') else {}
+    if log:
+        logging_settings.update(level=int(log))
+    logging.basicConfig(**logging_settings)
+    database_settings = settings.DATABASE
     conn = get_connection(database_settings)
     apply_migrations(conn, mod_name, migration_name)
 

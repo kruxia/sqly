@@ -5,11 +5,10 @@ from importlib import import_module
 from .dialects import Dialects
 
 
-def get_database_settings(mod_name, settings_mod_name=None):
+def get_settings(mod_name, settings_mod_name=None):
     if not settings_mod_name:
         settings_mod_name = f"{mod_name}.settings"
-    database_settings = import_module(settings_mod_name).DATABASE
-    return database_settings
+    return import_module(settings_mod_name)
 
 
 def get_connection(database_settings, json_encoder=None, json_decoder=None):
