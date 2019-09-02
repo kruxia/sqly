@@ -15,7 +15,7 @@ class SQL:
             self.query = [self.query]
 
     def __str__(self):
-        return ' '.join([str(q) for q in walk_list(self.query)])
+        return ' '.join([str(q) for q in walk_list(self.query) if q])
 
     def render(
         self,
