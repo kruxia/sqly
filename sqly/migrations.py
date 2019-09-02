@@ -10,9 +10,8 @@ from pathlib import Path
 import click
 import yaml
 
-from .dialects import Dialects
-from .sql import SQL
-from . import queries
+from sqly import queries
+from sqly.dialects import Dialects
 
 DB_REL_PATH = 'db'
 log = logging.getLogger(__name__)

@@ -2,7 +2,7 @@
 A library of prepared queries (in Python, not the database) for use by other programs.
 """
 
-from .sql import SQL
+from sqly.sql import SQL
 
 
 def select(dialect=None):

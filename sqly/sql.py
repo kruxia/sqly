@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
-from .dialects import Dialects
-from .lib import walk_list
+from sqly.dialects import Dialects
+from sqly.lib import walk_list
 
 
 @dataclass
