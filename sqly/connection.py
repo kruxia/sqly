@@ -5,12 +5,6 @@ from importlib import import_module
 from .dialects import Dialects
 
 
-def get_settings(mod_name, settings_mod_name=None):
-    if not settings_mod_name:
-        settings_mod_name = f"{mod_name}.settings"
-    return import_module(settings_mod_name)
-
-
 def get_connection(database_settings, json_encoder=None, json_decoder=None):
     """get a connection for the given database_settings"""
     dialect = database_settings['dialect']
