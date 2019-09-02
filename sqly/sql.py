@@ -8,11 +8,6 @@ from .lib import walk_list
 class SQL:
     query: list = field(default_factory=list)
     dialect: str = Dialects.EMBEDDED
-    keys: list = field(default_factory=list)
-    fields: list = field(default_factory=list)
-    filters: list = field(default_factory=list)
-    assigns: list = field(default_factory=list)
-    params: list = field(default_factory=list)
 
     def __post_init__(self):
         # allow the query to be a single string
@@ -22,20 +17,35 @@ class SQL:
     def __str__(self):
         return ' '.join([str(q) for q in walk_list(self.query)])
 
-    def render(self, data):
-        """render the query and its values for a given data input."""
+    def render(
+        self,
+        data,
+        fields=None,
+        keys=None,
+        filters=None,
+        assigns=None,
+        params=None,
+        dialect=None,
+        **kwargs
+    ):
+        """
+        Render the query and its values for a given data input.
+        """
+        # Format the query string
+        keys = keys or data.keys()
+        fields = fields or data.keys()
         query_string = str(self)
-        fields = self.fields or data.keys()
-        rendered_query, parameter_values = self.dialect.render(
-            query_string.format(
-                keys=', '.join(self.keys),
-                fields=', '.join(fields),
-                filters=' AND '.join(self.filters or self.assigns_list(self.keys)),
-                assigns=', '.join(self.assigns or self.assigns_list(fields)),
-                params=', '.join(self.params or self.params_list(fields)),
-            ),
-            data,
+        formatted_query = query_string.format(
+            keys=', '.join(keys),
+            fields=', '.join(fields),
+            filters=' AND '.join(filters or self.assigns_list(keys)),
+            assigns=', '.join(assigns or self.assigns_list(fields)),
+            params=', '.join(params or self.params_list(fields)),
+            **kwargs
         )
+        # Render the query and parameter value with the correct syntax for the dialect
+        dialect = dialect or self.dialect
+        rendered_query, parameter_values = dialect.render(formatted_query, data)
         return rendered_query, parameter_values
 
     def params_list(self, fields=None):
