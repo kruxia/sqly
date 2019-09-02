@@ -26,7 +26,7 @@ class SQL:
         assigns=None,
         params=None,
         dialect=None,
-        **kwargs
+        **kwargs,
     ):
         """
         Render the query and its values for a given data input.
@@ -41,7 +41,10 @@ class SQL:
             filters=' AND '.join(filters or self.assigns_list(keys)),
             assigns=', '.join(assigns or self.assigns_list(fields)),
             params=', '.join(params or self.params_list(fields)),
-            **kwargs
+            assigns_excluded=', '.join(
+                f'{key}=EXCLUDED.{key}' for key in fields if key not in keys
+            ),
+            **kwargs,
         )
         # Render the query and parameter value with the correct syntax for the dialect
         dialect = dialect or self.dialect
