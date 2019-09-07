@@ -28,10 +28,11 @@ def main():
 @click.argument('mod_name')
 @click.option('-s', '--settings_mod_name', required=False)
 @click.option('--loglevel', required=False)
-def init(mod_name, settings_mod_name, loglevel):
+@click.argument('requires', required=False)
+def init(mod_name, settings_mod_name, loglevel, requires):
     settings = lib.get_settings(mod_name, settings_mod_name)
     logging.basicConfig(**lib.get_logging_settings(settings, loglevel))
-    migration_name = migrations.init_app(mod_name)
+    migration_name = migrations.init_app(mod_name, requires=[requires])
     print(f"sqly: initialized app: {mod_name}")
     print(f"sqly: created migration: {mod_name}:{migration_name}")
 

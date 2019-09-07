@@ -19,7 +19,7 @@ SQL_DIALECT = Dialects.ASYNCPG
 log = logging.getLogger('sqly.migrations')
 
 
-def init_app(mod_name):
+def init_app(mod_name, requires=None):
     """
     mod_name: an importable module name (dot-separated)
 
@@ -28,10 +28,10 @@ def init_app(mod_name):
     """
     mod_path = get_mod_filepath(mod_name)
     for pathname in ['migrations', 'data', 'lib']:
-        path = mod_path / pathname
+        path = mod_path / DB_REL_PATH / pathname
         if not path.exists():
             os.makedirs(path)
-    return create_migration(mod_name, label='init')
+    return create_migration(mod_name, label='init', additional_requires=requires)
 
 
 def get_mod_filepath(mod_name):
