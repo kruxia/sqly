@@ -12,7 +12,11 @@
     "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
     "Programming Language :: Python :: 3"
   ],
-  "entry_points": {},
+  "entry_points": {
+    "console_scripts": [
+      "sqly = sqly.__main__:main"
+    ]
+  },
   "install_requires": [],
   "extras_require": {
     "dev": [],
