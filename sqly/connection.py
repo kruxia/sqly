@@ -1,7 +1,7 @@
-import asyncio
 import json
 from importlib import import_module
 
+from sqly import lib
 from .dialects import Dialects
 
 
@@ -17,10 +17,10 @@ def get_connection(database_settings, json_encoder=None, json_decoder=None):
     else:
         raise ValueError('Unsupported dialect: %r' % dialect)
 
-    conn = connection_run(adaptor.connect(**database_settings['connection']))
+    conn = lib.run(adaptor.connect(**database_settings['connection']))
 
     if dialect == Dialects.ASYNCPG:
-        connection_run(
+        lib.run(
             conn.set_type_codec(
                 'json',
                 encoder=json_encoder or json.dumps,
@@ -31,9 +31,3 @@ def get_connection(database_settings, json_encoder=None, json_decoder=None):
 
     return conn
 
-
-def connection_run(result):
-    if asyncio.iscoroutine(result):
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(result)
-    return result

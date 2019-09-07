@@ -1,3 +1,4 @@
+import asyncio
 from importlib import import_module
 
 
@@ -14,6 +15,13 @@ def walk_list(a_list):
 def flatten(a_list):
     """convert a walked list into a single list"""
     return list(walk_list(a_list))
+
+
+def run(result):
+    if asyncio.iscoroutine(result):
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(result)
+    return result
 
 
 def get_settings(mod_name, settings_mod_name=None):

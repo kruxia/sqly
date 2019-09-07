@@ -11,9 +11,8 @@ import click
 import yaml
 
 from sqly import queries
-from sqly.connection import connection_run, get_connection
+from sqly import lib
 from sqly.dialects import Dialects
-from sqly.lib import get_logging_settings, get_settings
 
 DB_REL_PATH = 'db'
 SQL_DIALECT = Dialects.ASYNCPG
@@ -160,7 +159,7 @@ def tail_migrations(data):
 
 def get_applied_migrations(conn):
     try:
-        applied_migrations = connection_run(
+        applied_migrations = lib.run(
             conn.fetch("select * from __migrations order by run_at")
         )
     except Exception:
@@ -218,7 +217,7 @@ def revert_migrations_descendants(
         descendants |= set(all_descendants[name])
     for name in reversed(names_sequence):
         if name in descendants and name in applied_migrations:
-            connection_run(apply_dn_migration(conn, data, mod_name, name, filepath))
+            lib.run(apply_dn_migration(conn, data, mod_name, name, filepath))
             applied_migrations.pop(applied_migrations[name])
     return applied_migrations
 
@@ -237,13 +236,13 @@ def apply_up_migration(conn, data, filepath, mod_name, name):
         with open(migration_path, 'rb') as f:
             sql = f.read().decode('utf-8').strip()
 
-        connection_run(conn.execute('BEGIN'))
+        lib.run(conn.execute('BEGIN'))
 
         log.debug('\n   %s' % sql.replace('\n', '\n  '))
         if sql:
-            result = connection_run(conn.execute(sql))
+            result = lib.run(conn.execute(sql))
             log.debug('  %s' % result)
-        result = connection_run(
+        result = lib.run(
             conn.fetchrow(
                 "insert into __migrations (mod, name, requires) values ($1, $2, $3) returning *",
                 mod_name,
@@ -266,7 +265,7 @@ def apply_up_migration(conn, data, filepath, mod_name, name):
             elif ext in ['.json', '.yaml', '.yml']:
                 load_data_file(conn, to_load_filepath)
 
-        connection_run(conn.execute('COMMIT'))
+        lib.run(conn.execute('COMMIT'))
 
 
 def apply_dn_migration(conn, data, mod_name, name, filepath):
@@ -274,25 +273,25 @@ def apply_dn_migration(conn, data, mod_name, name, filepath):
     with open(migration_path, 'rb') as f:
         sql = f.read().decode('utf-8').strip()
 
-    connection_run(conn.execute('BEGIN'))
+    lib.run(conn.execute('BEGIN'))
 
     if sql:
-        result = connection_run(conn.execute(sql))
+        result = lib.run(conn.execute(sql))
         log.info('   ', result.replace('\n', '\n    '))
-    result = connection_run(
+    result = lib.run(
         conn.fetchrow(
             "delete from __migrations where mod=$1 and name=$2", mod_name, name
         )
     )
     log.info('   ', result.replace('\n', '\n    '))
 
-    connection_run(conn.execute('COMMIT'))
+    lib.run(conn.execute('COMMIT'))
 
 
 def load_sql_file(conn, filepath):
     with open(filepath, 'rb') as f:
         sql = f.read().decode('utf-8')
-    result = connection_run(conn.execute(sql))
+    result = lib.run(conn.execute(sql))
     log.debug('  %s' % result)
 
 
@@ -317,7 +316,7 @@ def load_data_file(conn, filepath):
     for record in records:
         sql, values = query.render(record, keys=primary_key, table=table)
         log.debug(f"{sql!r} {values!r}")
-        result = connection_run(conn.execute(sql, *values))
+        result = lib.run(conn.execute(sql, *values))
         log.debug(result)
 
 
