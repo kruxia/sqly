@@ -221,13 +221,12 @@ def revert_migrations_descendants(
             migration['name'] for migration in applied_migrations
         ]:
             lib.run(apply_dn_migration(conn, data, mod_name, name, filepath))
-            applied_migrations.pop(
-                [
-                    migration
-                    for migration in applied_migrations
-                    if migration['name'] == name
-                ][0]
-            )
+            migration = [
+                migration
+                for migration in applied_migrations
+                if migration['name'] == name
+            ][0]
+            applied_migrations.pop(applied_migrations.index(migration))
     return applied_migrations
 
 
@@ -237,7 +236,7 @@ def apply_up_migration(conn, data, filepath, mod_name, name):
         other_mod_name, migration_name = name.split(':')
         apply_migrations(conn, other_mod_name, migration_name, down=False)
     else:
-        log.info(f"{mod_name}:{name}:")
+        log.info(f'apply up migration: {mod_name}:{name} ({filepath})')
         migration_path = filepath / (name + '.up.sql')
         requires = data[name].get('requires')
         if requires and isinstance(requires, str):
@@ -278,8 +277,8 @@ def apply_up_migration(conn, data, filepath, mod_name, name):
 
 
 def apply_dn_migration(conn, data, mod_name, name, filepath):
+    log.info(f'apply dn migration: {mod_name}:{name} ({filepath})')
     migration_path = filepath / (name + '.dn.sql')
-    log.debug('migration_path = %s' % migration_path)
     with open(migration_path, 'rb') as f:
         sql = f.read().decode('utf-8').strip()
 
@@ -287,7 +286,7 @@ def apply_dn_migration(conn, data, mod_name, name, filepath):
 
     if sql:
         result = lib.run(conn.execute(sql))
-        log.info('   ', result.replace('\n', '\n    '))
+        log.info('    %s' % result.replace('\n', '\n    '))
     lib.run(
         conn.fetchrow(
             "delete from __migrations where mod=$1 and name=$2", mod_name, name
