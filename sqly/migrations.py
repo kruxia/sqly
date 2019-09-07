@@ -176,7 +176,7 @@ def apply_migrations(conn, mod_name, names=None, down=True):
     applied_migrations = get_applied_migrations(conn)
     applied_migrations_names = [migration['name'] for migration in applied_migrations]
 
-    log.debug('applied_migrations = %r' % applied_migrations_names)
+    log.debug('applied migrations = %r' % applied_migrations_names)
 
     # ensure that the given migrations are a list; default to the tail_migrations
     if not names:
@@ -184,7 +184,7 @@ def apply_migrations(conn, mod_name, names=None, down=True):
     elif isinstance(names, str):
         names = [names]
 
-    log.debug('names = %r' % names)
+    log.debug('migration names = %r' % names)
 
     if down:
         # revert any descendants of the named migrations
@@ -215,10 +215,19 @@ def revert_migrations_descendants(
     descendants = set()
     for name in names:
         descendants |= set(all_descendants[name])
+    log.debug('descendants = %r' % descendants)
     for name in reversed(names_sequence):
-        if name in descendants and name in applied_migrations:
+        if name in descendants and name in [
+            migration['name'] for migration in applied_migrations
+        ]:
             lib.run(apply_dn_migration(conn, data, mod_name, name, filepath))
-            applied_migrations.pop(applied_migrations[name])
+            applied_migrations.pop(
+                [
+                    migration
+                    for migration in applied_migrations
+                    if migration['name'] == name
+                ][0]
+            )
     return applied_migrations
 
 
@@ -270,6 +279,7 @@ def apply_up_migration(conn, data, filepath, mod_name, name):
 
 def apply_dn_migration(conn, data, mod_name, name, filepath):
     migration_path = filepath / (name + '.dn.sql')
+    log.debug('migration_path = %s' % migration_path)
     with open(migration_path, 'rb') as f:
         sql = f.read().decode('utf-8').strip()
 
@@ -278,12 +288,11 @@ def apply_dn_migration(conn, data, mod_name, name, filepath):
     if sql:
         result = lib.run(conn.execute(sql))
         log.info('   ', result.replace('\n', '\n    '))
-    result = lib.run(
+    lib.run(
         conn.fetchrow(
             "delete from __migrations where mod=$1 and name=$2", mod_name, name
         )
     )
-    log.info('   ', result.replace('\n', '\n    '))
 
     lib.run(conn.execute('COMMIT'))
 
