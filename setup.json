@@ -17,7 +17,7 @@
       "sqly = sqly.__main__:main"
     ]
   },
-  "install_requires": [],
+  "install_requires": ["PyYAML==5.1.2"],
   "extras_require": {
     "dev": [],
     "test": []
