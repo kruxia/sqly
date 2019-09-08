@@ -62,5 +62,18 @@ def migrate(mod_name, settings_mod_name, loglevel, migration_name=None):
     migrations.apply_migrations(conn, mod_name, migration_name)
 
 
+@main.command()
+@click.argument('mod_name')
+@click.argument('migration_name')
+@click.option('--loglevel', required=False)
+@click.option('-s', '--settings_mod_name', required=False)
+def reverse(mod_name, migration_name, settings_mod_name, loglevel):
+    settings = lib.get_settings(mod_name, settings_mod_name)
+    logging.basicConfig(**lib.get_logging_settings(settings, loglevel))
+    database_settings = settings.DATABASE
+    conn = connection.get_connection(database_settings)
+    migrations.revert_migrations(conn, mod_name, migration_name)
+
+
 if __name__ == '__main__':
     main()

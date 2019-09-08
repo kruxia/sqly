@@ -207,6 +207,20 @@ def apply_migrations(conn, mod_name, names=None, down=True):
         apply_up_migration(conn, data, filepath, mod_name, name)
 
 
+def revert_migrations(conn, mod_name, names):
+    filepath = get_mod_filepath(mod_name) / DB_REL_PATH / 'migrations'
+    data = load_migrations_data(mod_name)
+
+    applied_migrations = get_applied_migrations(conn)
+    applied_migrations_names = [migration['name'] for migration in applied_migrations]
+    applied_migrations = revert_migrations_descendants(
+        conn, data, mod_name, names, filepath, applied_migrations
+    )
+    for name in names:
+        if name not in applied_migrations_names:
+            apply_dn_migration(conn, data, mod_name, name, filepath)    
+
+
 def revert_migrations_descendants(
     conn, data, mod_name, names, filepath, applied_migrations
 ):
