@@ -1,17 +1,7 @@
-import json
 import logging
-import os
-import re
-import sys
-from datetime import datetime
-from importlib import import_module
-from pathlib import Path
 
 import click
-import yaml
 
-from sqly import queries
-from sqly.dialects import Dialects
 from sqly import connection, lib, schema
 
 log = logging.getLogger('sqly')

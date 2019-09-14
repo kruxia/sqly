@@ -2,6 +2,7 @@ import json
 from importlib import import_module
 
 from sqly import lib
+
 from .dialects import Dialects
 
 
@@ -30,4 +31,3 @@ def get_connection(database_settings, json_encoder=None, json_decoder=None):
         )
 
     return conn
-

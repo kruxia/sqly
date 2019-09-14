@@ -7,11 +7,8 @@ from datetime import datetime
 from importlib import import_module
 from pathlib import Path
 
-import click
 import yaml
-
-from sqly import queries
-from sqly import lib
+from sqly import lib, queries
 from sqly.dialects import Dialects
 
 DB_REL_PATH = 'db'
@@ -43,9 +40,7 @@ def get_mod_filepath(mod_name):
 
 def load_migrations_data(mod_name):
     mod_filepath = get_mod_filepath(mod_name)
-    migrations_data_filepath = (
-        mod_filepath / DB_REL_PATH / MIGRATIONS_YAML
-    )
+    migrations_data_filepath = mod_filepath / DB_REL_PATH / MIGRATIONS_YAML
     if migrations_data_filepath.exists():
         migrations_data = yaml.safe_load(open(migrations_data_filepath))
     else:
@@ -62,9 +57,7 @@ def load_migrations_data(mod_name):
 
 def dump_migrations_data(mod_name, migrations_data):
     mod_filepath = get_mod_filepath(mod_name)
-    migrations_data_filepath = (
-        mod_filepath / DB_REL_PATH / MIGRATIONS_YAML
-    )
+    migrations_data_filepath = mod_filepath / DB_REL_PATH / MIGRATIONS_YAML
     if not migrations_data_filepath.parent.exists():
         os.makedirs(migrations_data_filepath.parent)
     with open(migrations_data_filepath, 'w') as f:
@@ -219,7 +212,7 @@ def revert_migrations(conn, mod_name, names):
     )
     for name in names:
         if name not in applied_migrations_names:
-            apply_dn_migration(conn, data, mod_name, name, filepath)    
+            apply_dn_migration(conn, data, mod_name, name, filepath)
 
 
 def revert_migrations_descendants(
