@@ -15,8 +15,9 @@ from sqly import lib
 from sqly.dialects import Dialects
 
 DB_REL_PATH = 'db'
+MIGRATIONS_YAML = 'migrations/__migrations.yaml'
 SQL_DIALECT = Dialects.ASYNCPG
-log = logging.getLogger('sqly.migrations')
+log = logging.getLogger('sqly.schema')
 
 
 def init_app(mod_name, requires=None):
@@ -43,7 +44,7 @@ def get_mod_filepath(mod_name):
 def load_migrations_data(mod_name):
     mod_filepath = get_mod_filepath(mod_name)
     migrations_data_filepath = (
-        mod_filepath / DB_REL_PATH / 'migrations' / '__migrations.yaml'
+        mod_filepath / DB_REL_PATH / MIGRATIONS_YAML
     )
     if migrations_data_filepath.exists():
         migrations_data = yaml.safe_load(open(migrations_data_filepath))
@@ -62,7 +63,7 @@ def load_migrations_data(mod_name):
 def dump_migrations_data(mod_name, migrations_data):
     mod_filepath = get_mod_filepath(mod_name)
     migrations_data_filepath = (
-        mod_filepath / DB_REL_PATH / 'migrations' / '__migrations.yaml'
+        mod_filepath / DB_REL_PATH / MIGRATIONS_YAML
     )
     if not migrations_data_filepath.parent.exists():
         os.makedirs(migrations_data_filepath.parent)

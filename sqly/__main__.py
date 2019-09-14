@@ -12,10 +12,8 @@ import yaml
 
 from sqly import queries
 from sqly.dialects import Dialects
-from sqly import connection, lib, migrations
+from sqly import connection, lib, schema
 
-DB_REL_PATH = 'db'
-SQL_DIALECT = Dialects.ASYNCPG
 log = logging.getLogger('sqly')
 
 
@@ -32,7 +30,7 @@ def main():
 def init(mod_name, settings_mod_name, loglevel, requires):
     settings = lib.get_settings(mod_name, settings_mod_name)
     logging.basicConfig(**lib.get_logging_settings(settings, loglevel))
-    migration_name = migrations.init_app(mod_name, requires=[requires])
+    migration_name = schema.init_app(mod_name, requires=[requires])
     print(f"sqly: initialized app: {mod_name}")
     print(f"sqly: created migration: {mod_name}:{migration_name}")
 
@@ -45,7 +43,7 @@ def init(mod_name, settings_mod_name, loglevel, requires):
 def migration(mod_name, label, settings_mod_name, loglevel):
     settings = lib.get_settings(mod_name, settings_mod_name)
     logging.basicConfig(**lib.get_logging_settings(settings, loglevel))
-    migration_name = migrations.create_migration(mod_name, label=label)
+    migration_name = schema.create_migration(mod_name, label=label)
     print(f"sqly: created migration: {mod_name}:{migration_name}")
 
 
@@ -59,7 +57,7 @@ def migrate(mod_name, settings_mod_name, loglevel, migration_name=None):
     logging.basicConfig(**lib.get_logging_settings(settings, loglevel))
     database_settings = settings.DATABASE
     conn = connection.get_connection(database_settings)
-    migrations.apply_migrations(conn, mod_name, migration_name)
+    schema.apply_migrations(conn, mod_name, migration_name)
 
 
 @main.command()
@@ -72,7 +70,7 @@ def reverse(mod_name, migration_name, settings_mod_name, loglevel):
     logging.basicConfig(**lib.get_logging_settings(settings, loglevel))
     database_settings = settings.DATABASE
     conn = connection.get_connection(database_settings)
-    migrations.revert_migrations(conn, mod_name, migration_name)
+    schema.revert_migrations(conn, mod_name, migration_name)
 
 
 if __name__ == '__main__':
