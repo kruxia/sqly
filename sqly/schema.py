@@ -24,12 +24,16 @@ def init_app(mod_name, requires=None):
     * create the db folder and subfolders
     * create the first migration, which requires sqly:00000000000000_init
     """
+    log.debug(f'init_app: {mod_name} {requires}')
     mod_path = get_mod_filepath(mod_name)
     for pathname in ['migrations', 'data', 'lib']:
         path = mod_path / DB_REL_PATH / pathname
         if not path.exists():
             os.makedirs(path)
-    return create_migration(mod_name, label='init', additional_requires=requires)
+    additional_requires = list(requires or []) + ['sqly:00000000000000_init']
+    return create_migration(
+        mod_name, label='init', additional_requires=additional_requires
+    )
 
 
 def get_mod_filepath(mod_name):
