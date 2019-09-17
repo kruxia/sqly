@@ -5,7 +5,7 @@ from sqly.lib import walk_list
 
 
 @dataclass
-class SQL:
+class Query:
     query: list = field(default_factory=list)
     dialect: str = DEFAULT_DIALECT
 
@@ -19,7 +19,7 @@ class SQL:
 
     def render(
         self,
-        data,
+        data=None,
         fields=None,
         keys=None,
         filters=None,
@@ -32,6 +32,8 @@ class SQL:
         Render the query and its values for a given data input.
         """
         # Format the query string
+        if data is None:
+            data = {}
         if dialect is None:
             dialect = self.dialect or DEFAULT_DIALECT
         if keys is None:
@@ -58,11 +60,63 @@ class SQL:
             **kwargs,
         )
         # Render the query and parameter value with the correct syntax for the dialect
-        rendered_query, parameter_values = dialect.render(formatted_query, data)
-        return rendered_query, parameter_values
+        # (see Dialects.render() for how different dialects are handled.)
+        return dialect.render(formatted_query, data)
 
     def params_list(self, fields):
         return [":%s" % field for field in fields]
 
     def assigns_list(self, fields):
         return ["%s=:%s" % (field, field) for field in fields]
+
+
+@dataclass
+class SQL:
+    """interface class: Enable creating queries with a given dialect in the whole app.
+    """
+    dialect: str = DEFAULT_DIALECT
+
+    def query(self, *args, dialect=None, **kwargs):
+        if not dialect:
+            dialect = self.dialect
+        return Query(*args, dialect=dialect, **kwargs)
+
+    def select(self):
+        return Query(['select {fields} from {table} {where}'], dialect=self.dialect)
+
+    def insert(self):
+        return Query(
+            [
+                'insert into {table} ({fields}) values ({params})',
+                'returning *' if self.dialect.supports_returning else '',
+            ],
+            dialect=self.dialect,
+        )
+
+    def update(self):
+        return Query(
+            [
+                'update {table} set {assigns} {where}',
+                'returning *' if self.dialect.supports_returning else '',
+            ],
+            dialect=self.dialect,
+        )
+
+    def delete(self):
+        return Query(
+            [
+                'delete from {table} {where}',
+                'returning *' if self.dialect.supports_returning else '',
+            ],
+            dialect=self.dialect,
+        )
+
+    def upsert(self):
+        return Query(
+            [
+                'INSERT INTO {table} ({fields}) VALUES ({params})',
+                'ON CONFLICT ({keys}) DO UPDATE SET {assigns_excluded}',
+                'RETURNING *' if self.dialect.supports_returning else '',
+            ],
+            dialect=self.dialect,
+        )
