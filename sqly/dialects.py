@@ -96,7 +96,10 @@ class Dialects(Enum):
                 'Dialect %r output_format %r not supported' % (self, self.output_format)
             )
 
-        return rendered_query_string, parameter_values
+        if self==Dialects.ASYNCPG:
+            return tuple([rendered_query_string] + parameter_values)
+        else:
+            return rendered_query_string, parameter_values
 
 
 DEFAULT_DIALECT = Dialects.EMBEDDED
