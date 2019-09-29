@@ -4,7 +4,7 @@ import click
 
 from sqly import connection, lib, schema
 
-log = logging.getLogger('sqly')
+logger = logging.getLogger('sqly')
 
 
 @click.group()
