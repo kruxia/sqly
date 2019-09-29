@@ -96,7 +96,7 @@ class Dialects(Enum):
                 'Dialect %r output_format %r not supported' % (self, self.output_format)
             )
 
-        if self==Dialects.ASYNCPG:
+        if self == Dialects.ASYNCPG:
             return tuple([rendered_query_string] + parameter_values)
         else:
             return rendered_query_string, parameter_values

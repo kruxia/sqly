@@ -8,7 +8,7 @@ from importlib import import_module
 from pathlib import Path
 
 import yaml
-from sqly import lib, queries
+from sqly import SQL, lib
 from sqly.dialects import Dialects
 
 DB_REL_PATH = 'db'
@@ -332,7 +332,7 @@ def load_data_file(conn, filepath):
         primary_key = [primary_key]
     log.info(f"{table} {primary_key} {len(records)} records")
 
-    query = queries.upsert(dialect=SQL_DIALECT)
+    query = SQL(SQL_DIALECT).upsert()
     for record in records:
         sql, values = query.render(record, keys=primary_key, table=table)
         log.debug(f"{sql!r} {values!r}")

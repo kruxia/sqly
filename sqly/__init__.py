@@ -1,2 +1,3 @@
 from .dialects import DEFAULT_DIALECT, Dialects
-from .sql import SQL, Query
+from .query import Query
+from .sql import SQL
