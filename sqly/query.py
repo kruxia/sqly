@@ -16,7 +16,6 @@ class Query:
         # allow the query to be a single string
         if isinstance(self.query, str):
             self.query = [self.query]
-        logger.debug(self)
 
     def __str__(self):
         return ' '.join([str(q) for q in walk_list(self.query) if q]).strip()
