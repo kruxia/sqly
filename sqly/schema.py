@@ -250,7 +250,7 @@ def apply_up_migration(conn, data, filepath, mod_name, name):
     else:
         log.info(f'apply up migration: {mod_name}:{name} ({filepath})')
         migration_path = filepath / (name + '.up.sql')
-        requires = data[name].get('requires')
+        requires = data.get(name, {}).get('requires')
         if requires and isinstance(requires, str):
             requires = [requires]
         with open(migration_path, 'rb') as f:
