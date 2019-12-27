@@ -1,6 +1,6 @@
 {
   "name": "sqly",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "Write SQL in SQL",
   "url": "https://github.com/BlackEarth/sqly",
   "author": "Sean Harrison",
@@ -17,7 +17,6 @@
       "sqly = sqly.__main__:main"
     ]
   },
-  "install_requires": ["PyYAML==5.1.2"],
   "extras_require": {
     "dev": [],
     "test": []
