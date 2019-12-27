@@ -17,5 +17,6 @@ if __name__ == '__main__':
         long_description=README,
         long_description_content_type='text/markdown',
         packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+        include_package_data=True,
         **CONFIG
     )

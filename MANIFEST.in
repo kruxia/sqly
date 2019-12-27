@@ -1,0 +1,4 @@
+include requirements.txt
+include setup.json
+include README.md
+graft sqly/db
