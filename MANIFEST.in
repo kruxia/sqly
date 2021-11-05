@@ -2,3 +2,4 @@ include setup.json
 include README.md
 graft req
 graft sqly/db
+graft sqly/migrations

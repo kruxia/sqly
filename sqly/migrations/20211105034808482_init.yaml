@@ -1,29 +1,26 @@
-id: "20211105034808482"
+id: 20211105034808482
 app: sqly
 name: init
 depends: []
 applied: null
 doc: >
-  The migrations table is stored in the sqly schema so it is out of the way of other
-  applications. The entire data of each migration is stored in the database, so that
-  (for example) a migration can be migrated down even if we're on a git branch where
-  that migration doesn't exist in the code.
+  The sqly_migration table is stored in the sqly schema so it is out of the way of other
+  applications. Each migration is stored entirely in the database, so that (for example)
+  the database can be migrated down even if we're on a git branch where some migrations
+  don't exist in the code.
   
-up: |
-  create schema if not exists sqly;
-  create table migrations (
-      id          varchar primary key,
-      app         varchar not null,
-      name        varchar,
-      depends     varchar[],
-      applied     timestamptz default current_timestamp,
-      doc         text,
-      up          text,
-      dn          text,
-      mod         varchar not null,
-      name        varchar not null
-  );
+up: 
+  - |
+    create table sqly_migration (
+        id          varchar primary key,
+        app         varchar not null,
+        name        varchar,
+        depends     varchar[],
+        applied     timestamptz default current_timestamp,
+        doc         text,
+        up          text,
+        dn          text
+    );
 
-dn: |
-  drop table sqly.migrations;
-  drop schema sqly;
+dn: 
+  - drop table sqly_migration;
