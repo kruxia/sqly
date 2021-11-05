@@ -1,1 +1,3 @@
 pip-wheel-metadata/sqly.dist-info
+sqly.egg-info/
+.envrc
