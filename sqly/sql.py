@@ -6,8 +6,7 @@ from sqly.query import Query
 
 @dataclass
 class SQL:
-    """interface class: Enable creating queries with a given dialect in the whole app.
-    """
+    """interface class: Enable creating queries with a given dialect in the whole app."""
 
     dialect: str = DEFAULT_DIALECT
 

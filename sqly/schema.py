@@ -8,6 +8,7 @@ from importlib import import_module
 from pathlib import Path
 
 import yaml
+
 from sqly import SQL, lib
 from sqly.dialects import Dialects
 
@@ -92,9 +93,9 @@ def create_migration(mod_name, label=None, additional_requires=None, then_load=N
     if then_load:
         migrations_data[migration_name]['then_load'] = then_load
     with open(migrations_data_path / f"{migration_name}.up.sql", 'wb') as f:
-        f.write(f''.encode('utf-8'))
+        f.write(''.encode('utf-8'))
     with open(migrations_data_path / f"{migration_name}.dn.sql", 'wb') as f:
-        f.write(f''.encode('utf-8'))
+        f.write(''.encode('utf-8'))
     dump_migrations_data(mod_name, migrations_data)
     return migration_name
 
