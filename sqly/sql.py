@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from sqly.dialects import DEFAULT_DIALECT
+from sqly.dialect import DEFAULT_DIALECT
 from sqly.query import Query
 
 

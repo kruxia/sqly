@@ -10,11 +10,11 @@ from pathlib import Path
 import yaml
 
 from sqly import SQL, lib
-from sqly.dialects import Dialects
+from sqly.dialect import Dialect
 
 DB_REL_PATH = 'db'
 MIGRATIONS_YAML = 'migrations/__migrations.yaml'
-SQL_DIALECT = Dialects.ASYNCPG
+SQL_DIALECT = Dialect.ASYNCPG
 log = logging.getLogger('sqly.schema')
 
 
