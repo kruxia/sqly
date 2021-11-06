@@ -56,12 +56,12 @@ class Migration(BaseModel):
     def key(self):
         """
         The Migration key is used to uniquely identify the migration in the dependency
-        graph. The key has the structure "{app}:{id}"
+        graph. The key has the structure "{app}:{id}_{name}"
 
         - app = the name of the app that the Migration is in
         - id = the integer id for the Migration in that app
         """
-        return f"{self.app}:{self.id}"
+        return f"{self.app}:{self.id}_{self.name or ''}"
 
     @property
     def filename(self):
