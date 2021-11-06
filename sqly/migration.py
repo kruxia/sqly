@@ -208,6 +208,6 @@ class Migration(BaseModel):
         connection.execute(sql, values)
 
     def delete(self, connection):
-        sql = "DELETE FROM sqly_migration where app=$1 and id=$2"
-        connection.execute(sql, [self.app, self.id])
+        sql = "DELETE FROM sqly_migration where id=$1"
+        connection.execute(sql, [self.id])
         connection.commit()
