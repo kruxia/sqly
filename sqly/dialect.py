@@ -1,6 +1,7 @@
 import json
 import re
 from enum import Enum
+from importlib import import_module
 
 
 class OutputFormats(Enum):
@@ -35,6 +36,21 @@ class Dialect(Enum):
             self.POSTGRES: OutputFormats.NUMBERED,
             self.ASYNCPG: OutputFormats.NUMBERED,
         }[self]
+
+    @property
+    def adaptor(self):
+        return {
+            self.EMBEDDED: 'sqlalchemy',
+            self.SQLALCHEMY: 'sqlalchemy',
+            self.MYSQL: 'mysql',
+            self.PSYCOPG2: 'psycopg2',
+            self.SQLITE: 'sqlite3',
+            self.POSTGRES: 'psycopg2',
+            self.ASYNCPG: 'asyncpg',
+        }[self]
+
+    def load_adaptor(self):
+        return import_module(self.adaptor)
 
     def render(self, query_string, data):
         """Render a query_string and its parameter values for this dialect.
