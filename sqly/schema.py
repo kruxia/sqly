@@ -9,7 +9,7 @@ from pathlib import Path
 
 import yaml
 from sqly import SQL, lib
-from sqly.dialects import Dialect
+from sqly.dialect import Dialect
 
 DB_REL_PATH = 'db'
 MIGRATIONS_YAML = 'migrations/__migrations.yaml'

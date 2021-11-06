@@ -37,14 +37,17 @@ class Dialect(Enum):
         }[self]
 
     def render(self, query_string, data):
-        """render a query_string and its parameter values for this dialect."""
+        """Render a query_string and its parameter values for this dialect.
+
+        Returns 2-tuple: (query: str, data: dict)
+        """
         pattern = r"(?<!\\):(\w+)\b"
-        fields = []  # ordered list of fields for positional outputs
+        fields = []  # ordered list of fields for positional outputs (closure)
 
         def replace_parameter(match):
             field = match.group(1)
 
-            # Build the ordered fields list for positional outputs
+            # Build the ordered fields list for positional outputs (fields in closure)
             if (
                 self.output_format in [OutputFormats.QMARK, OutputFormats.NUMBERED]
                 or field not in fields
@@ -72,12 +75,12 @@ class Dialect(Enum):
             query_string = query_string.replace('%', '%%')
 
         # 2. Replace the parameter with its dialect-specific representation
-        rendered_query_string = re.sub(pattern, replace_parameter, query_string).strip()
+        query_string = re.sub(pattern, replace_parameter, query_string).strip()
 
         # 3. Un-escape remaining escaped colon params
         if self.output_format == OutputFormats.COLON:
             # replace \:word with :word because the colon-escape is no longer needed.
-            rendered_query_string = re.sub(r"\\:(\w+)\b", r":\1", rendered_query_string)
+            query_string = re.sub(r"\\:(\w+)\b", r":\1", query_string)
 
         # 4. Build the parameter_values dict or list for use with the query
         if self.output_format in [OutputFormats.COLON, OutputFormats.PERCENT]:
@@ -97,9 +100,9 @@ class Dialect(Enum):
             )
 
         if self == Dialect.ASYNCPG:
-            return tuple([rendered_query_string] + parameter_values)
+            return tuple([query_string] + parameter_values)
         else:
-            return rendered_query_string, parameter_values
+            return tuple(query_string, parameter_values)
 
 
 DEFAULT_DIALECT = Dialect.EMBEDDED
