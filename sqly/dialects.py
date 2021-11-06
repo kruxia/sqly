@@ -10,7 +10,7 @@ class OutputFormats(Enum):
     DOLLAR_POS = '$i'
 
 
-class Dialects(Enum):
+class Dialect(Enum):
     # the value of each Dialect represents the syntax that it uses for query parameters
     EMBEDDED = 'embedded'
     MYSQL = 'mysql'
@@ -96,10 +96,10 @@ class Dialects(Enum):
                 'Dialect %r output_format %r not supported' % (self, self.output_format)
             )
 
-        if self == Dialects.ASYNCPG:
+        if self == Dialect.ASYNCPG:
             return tuple([rendered_query_string] + parameter_values)
         else:
             return rendered_query_string, parameter_values
 
 
-DEFAULT_DIALECT = Dialects.EMBEDDED
+DEFAULT_DIALECT = Dialect.EMBEDDED

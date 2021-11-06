@@ -63,7 +63,7 @@ class Query:
             **kwargs,
         )
         # Render the query and parameter value with the correct syntax for the dialect
-        # (see Dialects.render() for how different dialects are handled.)
+        # (see Dialect.render() for how different dialects are handled.)
         return dialect.render(formatted_query, data)
 
     def params_list(self, fields):
