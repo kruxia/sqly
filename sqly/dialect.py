@@ -102,7 +102,7 @@ class Dialect(Enum):
         if self == Dialect.ASYNCPG:
             return tuple([query_string] + parameter_values)
         else:
-            return tuple(query_string, parameter_values)
+            return query_string, parameter_values
 
 
 DEFAULT_DIALECT = Dialect.EMBEDDED
