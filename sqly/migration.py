@@ -115,10 +115,10 @@ class Migration(BaseModel):
         return nx.transitive_reduction(graph)
 
     @classmethod
-    def migrate(cls, connection, migration):
+    def migrate(cls, database, migration, connection=None):
         """
-        Migrate the database to this migration, either up or down, using the
-        (databases-compatible) database.
+        Migrate the database to this migration, either up or down, using the given
+        (sqly) Database.
 
         1. Collate the list of applied migrations in the database with the list of
            migrations available in this application. (Edge case: There are no migrations
@@ -130,6 +130,7 @@ class Migration(BaseModel):
               from the last applied successor down to this migration.
         3. Apply the sequence of migrations (either up or down).
         """
+        connection = connection or database.connect()
         try:
             cursor = connection.execute(
                 "select * from sqly_migration where applied is not null"
@@ -157,12 +158,12 @@ class Migration(BaseModel):
             )
             for key in list(nx.lexicographical_topological_sort(subgraph)):
                 if key not in db_migrations:
-                    migrations[key].apply(connection, direction='up')
+                    migrations[key].apply(database, direction='up', connection=connection)
         else:
             subgraph = graph.subgraph(list(graph.successors(migration.key)))
             for key in reversed(list(nx.lexicographical_topological_sort(subgraph))):
                 if key in db_migrations:
-                    migrations[key].apply(connection, direction='dn')
+                    migrations[key].apply(database, direction='dn', connection=connection)
 
     def ancestors(self, graph):
         return nx.ancestors(graph, self.id)
@@ -179,35 +180,35 @@ class Migration(BaseModel):
             size = f.write(self.yaml().encode())
         return filepath, size
 
-    def apply(self, connection, direction='up'):
+    def apply(self, database, direction='up', connection=None):
         """
         Apply the migration (direction = 'up' or 'dn') to connection database. The
         entire migration script is wrapped in a transaction.
         """
         print(self.key, self.name, direction, end=' ... ')
-        sql = getattr(self, direction)
-        connection.executescript(sql)
+        connection = connection or database.connect()
+        connection.execute('begin;')
+        connection.executescript(getattr(self, direction) or '')
         if direction == 'up':
-            self.insert(connection)
+            connection.execute(*self.insert_query(database))
         else:
-            self.delete(connection)
-        connection.commit()
+            connection.execute(*self.delete_query(database))
+        connection.execute('commit;')
         print('OK')
 
-    def insert(self, connection):
+    def insert_query(self, database):
         """
         Insert this migration into the sqly_migration table.
         """
-        keys = [k for k in self.dict().keys() if getattr(self, k)]
-        params = [f'${index+1}' for index, k in enumerate(keys)]
-        values = [self.dict()[k] for k in keys]
+        data = {k: v for k, v in self.dict().items() if v}
+        keys = [k for k in data.keys()]
+        params = [f':{k}' for k in keys]
         sql = f"""
             INSERT INTO sqly_migration ({','.join(keys)}) 
             VALUES ({','.join(params)});
         """
-        connection.execute(sql, values)
+        return database.dialect.render(sql, data)
 
-    def delete(self, connection):
-        sql = "DELETE FROM sqly_migration where id=$1"
-        connection.execute(sql, [self.id])
-        connection.commit()
+    def delete_query(self, database):
+        sql = "DELETE FROM sqly_migration where id=:id"
+        return database.dialect.render(sql, self.dict())
