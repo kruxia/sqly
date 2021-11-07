@@ -1,4 +1,5 @@
 import os
+import uuid
 from datetime import datetime, timezone
 from glob import glob
 from importlib import import_module
@@ -8,6 +9,8 @@ from typing import List, Tuple
 import networkx as nx
 import yaml
 from pydantic import BaseModel, Field, validator
+
+from sqly.settings import SQLY_UUID_NAMESPACE
 
 
 def app_migrations_path(app):
@@ -52,6 +55,9 @@ class Migration(BaseModel):
 
     def __str__(self):
         return self.yaml()
+
+    def __hash__(self):
+        return uuid.uuid3(SQLY_UUID_NAMESPACE, self.key).int
 
     @property
     def key(self):
