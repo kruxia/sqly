@@ -2,7 +2,6 @@ id: 20211105034808482
 app: sqly
 name: init
 depends: []
-applied: null
 doc: >-
   The sqly_migration table is stored with the "sqly_" prefix so it is out of the way of
   other applications. (Some databases don't support schemas.) Each migration is stored
