@@ -1,5 +1,5 @@
+from pydantic import BaseModel
 
-from pydantic import BaseModel, Field, validator
 from sqly.dialect import Dialect
 from sqly.lib import run
 
