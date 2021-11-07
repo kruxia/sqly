@@ -78,20 +78,25 @@ class Migration(BaseModel):
         return migrations
 
     @classmethod
-    def create(cls, app, name=None):
+    def all_migrations(cls, *apps):
+        migrations = []
+        for app in apps:
+            migrations.extend(cls.app_migrations(app))
+        return migrations
+
+    @classmethod
+    def create(cls, app, *other_apps, name=None):
         """
-        Every new migration depends on the previous generation of migration. (For
-        information on the calculation of topological generations in a graph, see:
-        <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.dag.topological_generations.html>)
+        Every new migration depends on all the "leaf" nodes in the existing migration
+        graph. Leaf nodes are those with out_degree == 0 (no edges pointing out). See:
+        <https://networkx.org/documentation/stable/reference/classes/generated/networkx.DiGraph.out_degree.html>.
+        For a worked example, see:
+        <https://stackoverflow.com/questions/31946253/find-end-nodes-leaf-nodes-in-radial-tree-networkx-graph/31953001>.
         """
-        migrations = cls.app_migrations('sqly') + cls.app_migrations(app)
+        migrations = cls.all_migrations('sqly', app, *other_apps)
         graph = cls.graph(migrations)
-        gens = list(nx.topological_generations(graph))
-        migration = cls(
-            app=app,
-            name=name or '',
-            depends=gens[-1] if gens else [],
-        )
+        depends = [node for node in graph.nodes() if graph.out_degree(node) == 0]
+        migration = cls(app=app, name=name or '', depends=depends)
         return migration
 
     @classmethod
