@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from glob import glob
 from importlib import import_module
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 
 import networkx as nx
 import yaml
@@ -47,8 +47,7 @@ class Migration(BaseModel):
         return (
             'Migration('
             + ', '.join(
-                f'{key}={getattr(self, key)!r}'
-                for key in ['id', 'app', 'name', 'depends', 'applied']
+                f'{key}={getattr(self, key)!r}' for key in ['key', 'depends', 'applied']
             )
             + ')'
         )
