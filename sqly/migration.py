@@ -176,6 +176,7 @@ class Migration(BaseModel):
 
     def save(self):
         filepath = app_migrations_path(self.app) / self.filename
+        os.makedirs(filepath.parent, exist_ok=True)
         with open(filepath, 'wb') as f:
             size = f.write(self.yaml().encode())
         return filepath, size
