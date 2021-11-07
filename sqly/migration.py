@@ -159,12 +159,16 @@ class Migration(BaseModel):
             )
             for key in list(nx.lexicographical_topological_sort(subgraph)):
                 if key not in db_migrations:
-                    migrations[key].apply(database, direction='up', connection=connection)
+                    migrations[key].apply(
+                        database, direction='up', connection=connection
+                    )
         else:
             subgraph = graph.subgraph(list(graph.successors(migration.key)))
             for key in reversed(list(nx.lexicographical_topological_sort(subgraph))):
                 if key in db_migrations:
-                    migrations[key].apply(database, direction='dn', connection=connection)
+                    migrations[key].apply(
+                        database, direction='dn', connection=connection
+                    )
 
     def ancestors(self, graph):
         return nx.ancestors(graph, self.id)
