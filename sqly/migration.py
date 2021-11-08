@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 from datetime import datetime, timezone
 from glob import glob
@@ -126,6 +127,7 @@ class Migration(BaseModel):
         migrations = cls.all_migrations(app, *other_apps)
         graph = cls.graph(migrations)
         depends = [node for node in graph.nodes() if graph.out_degree(node) == 0]
+        name = re.sub(r'\W+', '_', name or '')
         migration = cls(
             app=app, name=name or '', depends=depends, doc=None, up=None, dn=None
         )
