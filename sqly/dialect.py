@@ -36,7 +36,7 @@ class Dialect(Enum):
             self.SQLITE: OutputFormats.QMARK,
             self.POSTGRES: OutputFormats.NUMBERED,
             self.ASYNCPG: OutputFormats.NUMBERED,
-            self.PYODBC: OutputFormats().QMARK,
+            self.PYODBC: OutputFormats.QMARK,
         }[self]
 
     @property
