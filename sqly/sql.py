@@ -13,10 +13,10 @@ class SQL:
 
     dialect: str = DEFAULT_DIALECT
 
-    def query(self, *args, **data):
-        return Query(*args, dialect=self.dialect).render(data)
+    def query(self, query_text, data):
+        return Query(query_text, dialect=self.dialect).render(data)
 
-    def select(self, tablename, filter_keys=None, **data):
+    def select(self, tablename, data, filter_keys=None):
         filter_data = {k: data[k] for k in filter_keys or data}
         return Query(
             [
@@ -27,7 +27,7 @@ class SQL:
             dialect=self.dialect,
         ).render(data)
 
-    def insert(self, tablename, **data):
+    def insert(self, tablename, data):
         return Query(
             [
                 f'insert into {tablename}',
@@ -37,7 +37,7 @@ class SQL:
             dialect=self.dialect,
         ).render(data)
 
-    def update(self, tablename, filter_keys=None, **data):
+    def update(self, tablename, data, filter_keys=None):
         filter_data = {k: data[k] for k in filter_keys or data}
         return Query(
             [
@@ -48,7 +48,7 @@ class SQL:
             dialect=self.dialect,
         ).render(data)
 
-    def delete(self, tablename, filter_keys=None, **data):
+    def delete(self, tablename, data, filter_keys=None):
         filter_data = {k: data[k] for k in filter_keys or data}
         return Query(
             [
@@ -58,7 +58,7 @@ class SQL:
             dialect=self.dialect,
         ).render(filter_data)
 
-    def upsert(self, tablename, key_fields, **data):
+    def upsert(self, tablename, data, key_fields):
         return Query(
             [
                 f'INSERT INTO {tablename} ({Query.fields(data)})',
