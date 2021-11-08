@@ -10,46 +10,48 @@ class SQL:
 
     dialect: str = DEFAULT_DIALECT
 
-    def query(self, *args, dialect=None, **kwargs):
-        if not dialect:
-            dialect = self.dialect
-        return Query(*args, dialect=dialect, **kwargs)
+    def query(self, *args, **kwargs):
+        return Query(*args, dialect=self.dialect, **kwargs)
 
     def select(self):
         return Query(['select {fields} from {table} {where}'], dialect=self.dialect)
 
-    def insert(self):
+    def insert(self, tablename, data):
         return Query(
             [
-                'insert into {table} ({fields}) values ({params})',
+                f'insert into {tablename}',
+                f'({Query.fields(data)}) values ({Query.params(data)})',
                 'returning *' if self.dialect.supports_returning else '',
             ],
             dialect=self.dialect,
         )
 
-    def update(self):
+    def update(self, tablename, update_data, filter_fields):
         return Query(
             [
-                'update {table} set {assigns} {where}',
+                f'update {tablename} set {Query.assigns(update_data)}', 
+                f'where {Query.where(filter_fields)}',
                 'returning *' if self.dialect.supports_returning else '',
             ],
             dialect=self.dialect,
         )
 
-    def delete(self):
+    def delete(self, tablename, filter_fields):
         return Query(
             [
-                'delete from {table} {where}',
+                f'delete from {tablename} where {Query.where(filter_fields)}',
                 'returning *' if self.dialect.supports_returning else '',
             ],
             dialect=self.dialect,
         )
 
-    def upsert(self):
+    def upsert(self, tablename, data, key_fields):
         return Query(
             [
-                'INSERT INTO {table} ({fields}) VALUES ({params})',
-                'ON CONFLICT ({keys}) DO UPDATE SET {assigns_excluded}',
+                f'INSERT INTO {tablename} ({Query.fields(data)})', 
+                f'VALUES ({Query.params(data)})',
+                f'ON CONFLICT ({key_fields}) DO UPDATE', 
+                f'SET {Query.assigns(data, excludes=key_fields)}',
                 'RETURNING *' if self.dialect.supports_returning else '',
             ],
             dialect=self.dialect,

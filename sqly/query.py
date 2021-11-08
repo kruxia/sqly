@@ -20,54 +20,27 @@ class Query:
     def __str__(self):
         return ' '.join([str(q) for q in walk_list(self.query) if q]).strip()
 
-    def render(
-        self,
-        data=None,
-        fields=None,
-        keys=None,
-        filters=None,
-        assigns=None,
-        params=None,
-        dialect=None,
-        **kwargs,
-    ):
+    def render(self, data=None):
         """
         Render the query and its values for a given data input.
         """
-        # Format the query string
-        if data is None:
-            data = {}
-        if dialect is None:
-            dialect = self.dialect or DEFAULT_DIALECT
-        if keys is None:
-            keys = data.keys()
-        if fields is None:
-            fields = data.keys()
-        if filters is None:
-            filters = self.assigns_list(keys)
-        if assigns is None:
-            assigns = self.assigns_list(fields)
-        if params is None:
-            params = self.params_list(fields)
+        data = data or {}
         query_string = str(self)
-        formatted_query = query_string.format(
-            keys=', '.join(keys),
-            fields=', '.join(fields),
-            filters=' AND '.join(filters),
-            where=f"where {' AND '.join(filters)}" if filters else '',
-            assigns=', '.join(assigns),
-            params=', '.join(params),
-            assigns_excluded=', '.join(
-                f'{key}=EXCLUDED.{key}' for key in fields if key not in keys
-            ),
-            **kwargs,
-        )
-        # Render the query and parameter value with the correct syntax for the dialect
-        # (see Dialect.render() for how different dialects are handled.)
-        return dialect.render(formatted_query, data)
+        return self.dialect.render(query_string, data)
 
-    def params_list(self, fields):
-        return [":%s" % field for field in fields]
+    @classmethod
+    def fields(cls, data):
+        return ', '.join(str(key) for key in data)
 
-    def assigns_list(self, fields):
-        return ["%s=:%s" % (field, field) for field in fields]
+    @classmethod
+    def params(cls, data):
+        return ', '.join(f':{key}' for key in data)
+
+    @classmethod
+    def assigns(cls, data, excludes=None):
+        excludes = excludes or []
+        return ', '.join(f'{key}=:{key}' for key in data if key not in excludes)
+
+    @classmethod
+    def where(cls, data):
+        return ' AND '.join(f'{key}=:{key}' for key in data)
