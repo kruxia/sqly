@@ -241,15 +241,16 @@ class Migration(BaseModel):
         Apply the migration (direction = 'up' or 'dn') to connection database. The
         entire migration script is wrapped in a transaction.
         """
-        print(self.key, self.name, direction, end=' ... ')
+        print(self.key, direction, end=' ... ')
         connection = connection or database.connect()
         connection.execute('begin;')
         connection.executescript(getattr(self, direction) or '')
         if direction == 'up':
-            connection.execute(*self.insert_query(database))
+            query = self.insert_query(database)
         else:
-            connection.execute(*self.delete_query(database))
+            query = self.delete_query(database)
 
+        connection.execute(*query)
         connection.execute('commit;')
         print('OK')
 

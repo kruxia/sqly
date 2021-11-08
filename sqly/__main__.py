@@ -44,28 +44,17 @@ def migrations(apps, include_depends=False):
 
 
 @main.command()
-@click.argument('app')
-@click.argument('migration_id')
+@click.argument('migration_key')
 @click.option(
     '-d',
     '--database-url',
     required=False,
     help="Datebase to migrate; default = env $DATABASE_URL",
 )
-def migrate(app, migration_id, database_url=None):
+def migrate(migration_key, database_url=None):
     """
-    Migrate --database | env $DATABASE_URL for the given APP to MIGRATION_ID.
+    Migrate database_url to the given MIGRATION_KEY (up or dn).
     """
-    app_migrations = Migration.app_migrations(app, include_depends=False)
-    m_id = migration_id.split('_')[0]  # remove the Migration.name if included
-
-    migration = next(
-        filter(lambda migration: migration.id == m_id, app_migrations), None
-    )
-    if migration is None:
-        print(f'Migration not found in {app}:{migration_id}', file=sys.stderr)
-        sys.exit(1)
-
     database_url = database_url or os.getenv('DATABASE_URL')
     if not database_url:
         print('--database-url or env $DATABASE_URL must be set', file=sys.stderr)
@@ -74,6 +63,7 @@ def migrate(app, migration_id, database_url=None):
     dialect = Database.connection_string_dialect(database_url)
     database = Database(connection_string=database_url, dialect=dialect)
 
+    migration = Migration.key_load(migration_key)
     Migration.migrate(database, migration)
 
 
