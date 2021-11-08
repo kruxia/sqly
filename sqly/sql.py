@@ -13,8 +13,15 @@ class SQL:
     def query(self, *args, **kwargs):
         return Query(*args, dialect=self.dialect, **kwargs)
 
-    def select(self):
-        return Query(['select {fields} from {table} {where}'], dialect=self.dialect)
+    def select(self, tablename, data, filter_fields):
+        return Query(
+            [
+                f'select {Query.fields(data)}',
+                f'from {tablename}',
+                f'where {Query.where(filter_fields)}',
+            ],
+            dialect=self.dialect,
+        )
 
     def insert(self, tablename, data):
         return Query(
@@ -26,10 +33,10 @@ class SQL:
             dialect=self.dialect,
         )
 
-    def update(self, tablename, update_data, filter_fields):
+    def update(self, tablename, data, filter_fields):
         return Query(
             [
-                f'update {tablename} set {Query.assigns(update_data)}', 
+                f'update {tablename} set {Query.assigns(data)}',
                 f'where {Query.where(filter_fields)}',
                 'returning *' if self.dialect.supports_returning else '',
             ],
@@ -48,9 +55,9 @@ class SQL:
     def upsert(self, tablename, data, key_fields):
         return Query(
             [
-                f'INSERT INTO {tablename} ({Query.fields(data)})', 
+                f'INSERT INTO {tablename} ({Query.fields(data)})',
                 f'VALUES ({Query.params(data)})',
-                f'ON CONFLICT ({key_fields}) DO UPDATE', 
+                f'ON CONFLICT ({key_fields}) DO UPDATE',
                 f'SET {Query.assigns(data, excludes=key_fields)}',
                 'RETURNING *' if self.dialect.supports_returning else '',
             ],
