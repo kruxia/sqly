@@ -13,7 +13,7 @@ up: >-
     id          integer primary key,
     app         varchar not null,
     name        varchar,
-    depends     varchar[],
+    depends     varchar default '[]',
     applied     timestamptz default current_timestamp,
     doc         text,
     up          text,

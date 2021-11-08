@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import uuid
@@ -42,7 +43,10 @@ class Migration(BaseModel):
 
     @validator('depends', pre=True, always=True)
     def depends_default_empty_list(cls, value):
-        return value or []
+        if isinstance(value, str):
+            return json.loads(value)
+        else:
+            return value or []
 
     def __repr__(self):
         return (
@@ -254,6 +258,8 @@ class Migration(BaseModel):
         Insert this migration into the sqly_migration table.
         """
         data = {k: v for k, v in self.dict(exclude_none=True).items()}
+        if not isinstance(data.get('depends'), str):
+            data['depends'] = json.dumps(data.get('depends') or [])
         keys = [k for k in data.keys()]
         params = [f':{k}' for k in keys]
         sql = f"""
