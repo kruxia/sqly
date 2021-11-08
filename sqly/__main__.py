@@ -1,8 +1,9 @@
 import logging
+import sys
 
 import click
 
-from sqly import connection, lib, schema
+from sqly.migration import Migration
 
 logger = logging.getLogger('sqly')
 
@@ -13,54 +14,36 @@ def main():
 
 
 @main.command()
-@click.argument('mod_name')
-@click.option('-s', '--settings_mod_name', required=False)
-@click.option('--loglevel', required=False)
-@click.argument('requires', nargs=-1, required=False)
-def init(mod_name, settings_mod_name, loglevel, requires):
-    settings = lib.get_settings(mod_name, settings_mod_name)
-    logging.basicConfig(**lib.get_logging_settings(settings, loglevel))
-    migration_name = schema.init_app(mod_name, requires=requires)
-    print(f"sqly: initialized app: {mod_name}")
-    print(f"sqly: created migration: {mod_name}:{migration_name}")
+@click.option(
+    '--name', required=False, help="A couple words describing the Migration's purpose"
+)
+@click.argument('app')
+@click.argument('other_apps', nargs=-1)
+def migration(app, other_apps, name):
+    """
+    Create a Migration in APP (importable python module) incorporating dependencies from
+    OTHER_APPS
+    """
+    migration = Migration.create(app, *other_apps, name=name)
+    migration.save()
+    print(f"Created migration: {migration.key}")
+    print("    depends:\n      -", '\n      - '.join(migration.depends or '[]'))
 
 
 @main.command()
-@click.option('-s', '--settings_mod_name', required=False)
-@click.option('--loglevel', required=False)
-@click.argument('mod_name')
-@click.argument('label', required=False)
-def migration(mod_name, label, settings_mod_name, loglevel):
-    settings = lib.get_settings(mod_name, settings_mod_name)
-    logging.basicConfig(**lib.get_logging_settings(settings, loglevel))
-    migration_name = schema.create_migration(mod_name, label=label)
-    print(f"sqly: created migration: {mod_name}:{migration_name}")
-
-
-@main.command()
-@click.option('-s', '--settings_mod_name', required=False)
-@click.option('--loglevel', required=False)
-@click.argument('mod_name')
-@click.argument('migration_name', required=False)
-def migrate(mod_name, settings_mod_name, loglevel, migration_name=None):
-    settings = lib.get_settings(mod_name, settings_mod_name)
-    logging.basicConfig(**lib.get_logging_settings(settings, loglevel))
-    database_settings = settings.DATABASE
-    conn = connection.get_connection(database_settings)
-    schema.apply_migrations(conn, mod_name, migration_name)
-
-
-@main.command()
-@click.argument('mod_name')
-@click.argument('migration_name')
-@click.option('--loglevel', required=False)
-@click.option('-s', '--settings_mod_name', required=False)
-def reverse(mod_name, migration_name, settings_mod_name, loglevel):
-    settings = lib.get_settings(mod_name, settings_mod_name)
-    logging.basicConfig(**lib.get_logging_settings(settings, loglevel))
-    database_settings = settings.DATABASE
-    conn = connection.get_connection(database_settings)
-    schema.revert_migrations(conn, mod_name, migration_name)
+@click.argument('app')
+@click.argument('migration_id')
+def migrate(app, migration_id):
+    app_migrations = Migration.app_migrations(app, include_depends=False)
+    # remove the Migration.name if included
+    m_id = migration_id.split('_')[0]
+    migration = next(
+        filter(lambda migration: migration.id == m_id, app_migrations), None
+    )
+    if migration is None:
+        print(f'Migration not found in {app}:{migration_id}', file=sys.stderr)
+        sys.exit(1)
+    Migration.migrate(None, migration)
 
 
 if __name__ == '__main__':
