@@ -20,6 +20,7 @@ class Dialect(Enum):
     ASYNCPG = 'asyncpg'
     PSYCOPG2 = 'psycopg2'
     SQLALCHEMY = 'sqlalchemy'
+    PYODBC = 'pyodbc'
 
     @property
     def supports_returning(self):
@@ -35,6 +36,7 @@ class Dialect(Enum):
             self.SQLITE: OutputFormats.QMARK,
             self.POSTGRES: OutputFormats.NUMBERED,
             self.ASYNCPG: OutputFormats.NUMBERED,
+            self.PYODBC: OutputFormats().QMARK,
         }[self]
 
     @property
@@ -42,11 +44,11 @@ class Dialect(Enum):
         return {
             self.EMBEDDED: 'sqlalchemy',
             self.SQLALCHEMY: 'sqlalchemy',
-            self.MYSQL: 'mysql',
-            self.PSYCOPG2: 'psycopg2',
             self.SQLITE: 'sqlite3',
-            self.POSTGRES: 'psycopg2',
+            self.MYSQL: 'mysql',
             self.ASYNCPG: 'asyncpg',
+            self.PSYCOPG2: 'psycopg2',
+            self.POSTGRES: 'pyodbc',
         }[self]
 
     def load_adaptor(self):
