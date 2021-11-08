@@ -16,8 +16,8 @@ class SQL:
     def query(self, *args, **data):
         return Query(*args, dialect=self.dialect).render(data)
 
-    def select(self, tablename, data, filter_data=None):
-        filter_data = filter_data or data
+    def select(self, tablename, filter_keys=None, **data):
+        filter_data = {k: data[k] for k in filter_keys or data}
         return Query(
             [
                 f'select {Query.fields(data)}',
@@ -25,9 +25,9 @@ class SQL:
                 f'where {Query.where(filter_data)}',
             ],
             dialect=self.dialect,
-        ).render(data | filter_data)
+        ).render(data)
 
-    def insert(self, tablename, data):
+    def insert(self, tablename, **data):
         return Query(
             [
                 f'insert into {tablename}',
@@ -37,7 +37,8 @@ class SQL:
             dialect=self.dialect,
         ).render(data)
 
-    def update(self, tablename, data, filter_data):
+    def update(self, tablename, filter_keys=None, **data):
+        filter_data = {k: data[k] for k in filter_keys or data}
         return Query(
             [
                 f'update {tablename} set {Query.assigns(data)}',
@@ -45,9 +46,10 @@ class SQL:
                 'returning *' if self.dialect.supports_returning else '',
             ],
             dialect=self.dialect,
-        ).render(data | filter_data)
+        ).render(data)
 
-    def delete(self, tablename, filter_data):
+    def delete(self, tablename, filter_keys=None, **data):
+        filter_data = {k: data[k] for k in filter_keys or data}
         return Query(
             [
                 f'delete from {tablename} where {Query.where(filter_data)}',
@@ -56,7 +58,7 @@ class SQL:
             dialect=self.dialect,
         ).render(filter_data)
 
-    def upsert(self, tablename, data, key_fields):
+    def upsert(self, tablename, key_fields, **data):
         return Query(
             [
                 f'INSERT INTO {tablename} ({Query.fields(data)})',
