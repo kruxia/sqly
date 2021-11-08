@@ -6,22 +6,26 @@ from sqly.query import Query
 
 @dataclass
 class SQL:
-    """interface class: Enable creating queries with a given dialect in the whole app."""
+    """
+    Interface class: Enable creating and rendering queries with a given dialect. All
+    queries are rendered with that dialect.
+    """
 
     dialect: str = DEFAULT_DIALECT
 
-    def query(self, *args, **kwargs):
-        return Query(*args, dialect=self.dialect, **kwargs)
+    def query(self, *args, **data):
+        return Query(*args, dialect=self.dialect).render(data)
 
-    def select(self, tablename, data, filter_fields):
+    def select(self, tablename, data, filter_data=None):
+        filter_data = filter_data or data
         return Query(
             [
                 f'select {Query.fields(data)}',
                 f'from {tablename}',
-                f'where {Query.where(filter_fields)}',
+                f'where {Query.where(filter_data)}',
             ],
             dialect=self.dialect,
-        )
+        ).render(data | filter_data)
 
     def insert(self, tablename, data):
         return Query(
@@ -31,26 +35,26 @@ class SQL:
                 'returning *' if self.dialect.supports_returning else '',
             ],
             dialect=self.dialect,
-        )
+        ).render(data)
 
-    def update(self, tablename, data, filter_fields):
+    def update(self, tablename, data, filter_data):
         return Query(
             [
                 f'update {tablename} set {Query.assigns(data)}',
-                f'where {Query.where(filter_fields)}',
+                f'where {Query.where(filter_data)}',
                 'returning *' if self.dialect.supports_returning else '',
             ],
             dialect=self.dialect,
-        )
+        ).render(data | filter_data)
 
-    def delete(self, tablename, filter_fields):
+    def delete(self, tablename, filter_data):
         return Query(
             [
-                f'delete from {tablename} where {Query.where(filter_fields)}',
+                f'delete from {tablename} where {Query.where(filter_data)}',
                 'returning *' if self.dialect.supports_returning else '',
             ],
             dialect=self.dialect,
-        )
+        ).render(filter_data)
 
     def upsert(self, tablename, data, key_fields):
         return Query(
@@ -62,4 +66,4 @@ class SQL:
                 'RETURNING *' if self.dialect.supports_returning else '',
             ],
             dialect=self.dialect,
-        )
+        ).render(data)
