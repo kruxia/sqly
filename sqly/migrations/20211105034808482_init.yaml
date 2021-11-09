@@ -10,7 +10,7 @@ doc: >-
 
 up: >-
   create table sqly_migration (
-    id          integer primary key,
+    id          bigint primary key,
     app         varchar not null,
     name        varchar,
     depends     varchar default '[]',

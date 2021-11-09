@@ -40,4 +40,5 @@ class Database(BaseModel):
             connection = mod.create_engine(self.connection_string).connect()
         else:
             connection = run_sync(mod.connect(self.connection_string))
+
         return connection
