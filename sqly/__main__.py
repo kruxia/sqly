@@ -2,6 +2,7 @@ import os
 import sys
 
 import click
+import networkx as nx
 
 from .database import Database
 from .migration import Migration
@@ -36,11 +37,17 @@ def migrations(apps, include_depends=False):
     List the Migrations in APPS
     """
     for app in apps:
-        print(
-            '\n'.join(
-                m.key for m in Migration.app_migrations(app, include_depends=False)
-            )
-        )
+        app_migrations = {
+            m.key: m
+            for m in Migration.app_migrations(app, include_depends=include_depends)
+        }
+        graph = Migration.graph(Migration.app_migrations(app, include_depends=True))
+        for key in nx.lexicographical_topological_sort(graph):
+            if key in app_migrations:
+                print(key)
+                migration = app_migrations[key]
+                if migration.depends:
+                    print('\t=> ' + ', '.join(migration.depends))
 
 
 @main.command()
