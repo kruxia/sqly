@@ -1,5 +1,0 @@
-00000000000000_init:
-  requires: null
-  then_load:
-  - ../lib/auto_updated.sql
-  - ../lib/auto_random_id.sql
