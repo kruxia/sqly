@@ -156,6 +156,30 @@ class Migration(BaseModel):
         return nx.transitive_reduction(graph)
 
     @classmethod
+    def database_migrations(cls, database, connection=None):
+        connection = connection or run_sync(database.connect())
+        if database.dialect == Dialect.ASYNCPG:
+            select = connection.fetch
+        else:
+            select = connection.execute
+
+        try:
+            rows = run_sync(select("select * from sqly_migration"))
+            if database.dialect == Dialect.ASYNCPG:
+                records = rows
+            else:
+                records = []
+                fields = [d[0] for d in rows.description]
+                for row in rows:
+                    records.append(dict(zip(fields, row)))
+
+            return {m.key: m for m in [cls(**record) for record in records]}
+
+        except Exception as exc:
+            print(exc)
+            return {}
+
+    @classmethod
     def migrate(cls, database, migration, connection=None, fake=False):
         """
         Migrate the database to this migration, either up or down, using the given
@@ -172,24 +196,8 @@ class Migration(BaseModel):
         3. Apply the sequence of migrations (either up or down).
         """
         connection = connection or run_sync(database.connect())
-        try:
-            cursor = run_sync(
-                connection.execute(
-                    "select * from sqly_migration where applied is not null"
-                )
-            )
-            fields = [d[0] for d in cursor.description]
-            rows = run_sync(cursor.fetchall())
-            db_migrations = {
-                m.key: m
-                for m in [
-                    cls(**record) for record in [dict(zip(fields, row)) for row in rows]
-                ]
-            }
-        except Exception as exc:
-            print(exc)
-            db_migrations = {}
 
+        db_migrations = cls.database_migrations(database, connection=connection)
         migrations = db_migrations | {
             m.key: m for m in cls.all_migrations(migration.app)
         }
