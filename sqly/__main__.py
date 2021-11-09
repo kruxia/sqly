@@ -32,6 +32,7 @@ def migration(app, other_apps, name):
 
 @main.command()
 @click.argument('apps', nargs=-1)
+@click.option('-i', '--include-depends', is_flag=True, help='Show dependencies')
 def migrations(apps, include_depends=False):
     """
     List the Migrations in APPS
@@ -46,7 +47,7 @@ def migrations(apps, include_depends=False):
             if key in app_migrations:
                 print(key)
                 migration = app_migrations[key]
-                if migration.depends:
+                if migration.depends and include_depends:
                     print('\t=> ' + ', '.join(migration.depends))
 
 
