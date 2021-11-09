@@ -181,7 +181,7 @@ class Migration(BaseModel):
             return {}
 
     @classmethod
-    def migrate(cls, database, migration, connection=None, fake=False):
+    def migrate(cls, database, migration, connection=None, dryrun=False):
         """
         Migrate the database to this migration, either up or down, using the given
         (sqly) Database.
@@ -248,14 +248,14 @@ class Migration(BaseModel):
 
         return filepath, size
 
-    def apply(self, database, direction='up', connection=None, fake=False):
+    def apply(self, database, direction='up', connection=None, dryrun=False):
         """
         Apply the migration (direction = 'up' or 'dn') to connection database. The
         entire migration script is wrapped in a transaction.
         """
         print(self.key, direction, end=' ... ')
 
-        if fake:
+        if dryrun:
             print('FAKE')
             return
 
