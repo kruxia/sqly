@@ -205,20 +205,20 @@ class Migration(BaseModel):
         graph = cls.graph(migrations.values())
 
         if migration.key not in db_migrations:
-            for key in list(nx.lexicographical_topological_sort(graph)):
+            # apply 'up' migrations for all ancestors and this migration
+            subgraph = nx.subgraph(graph, migration.ancestors(graph) | {migration.key})
+            for key in nx.lexicographical_topological_sort(subgraph):
                 if key not in db_migrations:
                     migrations[key].apply(
-                        database, direction='up', connection=connection, fake=fake
+                        database, direction='up', connection=connection, dryrun=dryrun
                     )
-                if key == migration.key:
-                    break
         else:
-            for key in reversed(list(nx.lexicographical_topological_sort(graph))):
-                if key == migration.key:
-                    break
+            # apply 'dn' migrations for all descendants in reverse
+            subgraph = nx.subgraph(graph, migration.descendants(graph))
+            for key in reversed(list(nx.lexicographical_topological_sort(subgraph))):
                 if key in db_migrations:
                     migrations[key].apply(
-                        database, direction='dn', connection=connection, fake=fake
+                        database, direction='dn', connection=connection, dryrun=dryrun
                     )
 
     def depends_migrations(self):
