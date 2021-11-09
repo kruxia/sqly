@@ -205,17 +205,17 @@ class Migration(BaseModel):
         graph = cls.graph(migrations.values())
 
         if migration.key not in db_migrations:
-            subgraph = graph.subgraph(
-                list(graph.predecessors(migration.key)) + [migration.key]
-            )
-            for key in list(nx.lexicographical_topological_sort(subgraph)):
+            for key in list(nx.lexicographical_topological_sort(graph)):
                 if key not in db_migrations:
                     migrations[key].apply(
                         database, direction='up', connection=connection, fake=fake
                     )
+                if key == migration.key:
+                    break
         else:
-            subgraph = graph.subgraph(list(graph.successors(migration.key)))
-            for key in reversed(list(nx.lexicographical_topological_sort(subgraph))):
+            for key in reversed(list(nx.lexicographical_topological_sort(graph))):
+                if key == migration.key:
+                    break
                 if key in db_migrations:
                     migrations[key].apply(
                         database, direction='dn', connection=connection, fake=fake
