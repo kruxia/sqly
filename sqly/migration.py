@@ -232,10 +232,10 @@ class Migration(BaseModel):
         return dms
 
     def ancestors(self, graph):
-        return nx.ancestors(graph, self.id)
+        return nx.ancestors(graph, self.key)
 
     def descendants(self, graph):
-        return nx.descendants(graph, self.id)
+        return nx.descendants(graph, self.key)
 
     def yaml(self, **kwargs):
         return yaml.dump(self.dict(**kwargs), default_flow_style=False, sort_keys=False)
