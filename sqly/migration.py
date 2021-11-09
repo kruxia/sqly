@@ -260,7 +260,13 @@ class Migration(BaseModel):
 
         connection = connection or run_sync(database.connect())
         run_sync(connection.execute('begin;'))
-        run_sync(connection.executescript(getattr(self, direction) or ''))
+
+        # (asyncpg does executescript via regular execute)
+        if database.dialect == database.dialect.ASYNCPG:
+            run_sync(connection.execute(getattr(self, direction) or ''))
+        else:
+            run_sync(connection.executescript(getattr(self, direction) or ''))
+
         if direction == 'up':
             query = self.insert_query(database)
         else:
