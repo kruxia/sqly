@@ -2,8 +2,8 @@ import logging
 
 from pydantic import BaseModel
 
-from sqly.dialect import Dialect
-from sqly.lib import run
+from .dialect import Dialect
+from .lib import run
 
 log = logging.getLogger('sqly.database')
 

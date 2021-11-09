@@ -1,8 +1,8 @@
 import logging
 from dataclasses import dataclass, field
 
-from sqly.dialect import DEFAULT_DIALECT
-from sqly.lib import walk_list
+from .dialect import DEFAULT_DIALECT
+from .lib import walk_list
 
 logger = logging.getLogger(__name__)
 

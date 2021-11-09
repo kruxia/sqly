@@ -3,8 +3,8 @@ import sys
 
 import click
 
-from sqly.database import Database
-from sqly.migration import Migration
+from .database import Database
+from .migration import Migration
 
 
 @click.group()

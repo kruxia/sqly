@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from sqly.dialect import DEFAULT_DIALECT
-from sqly.query import Query
+from .dialect import DEFAULT_DIALECT
+from .query import Query
 
 
 @dataclass

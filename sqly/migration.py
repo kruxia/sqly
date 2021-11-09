@@ -12,7 +12,7 @@ import networkx as nx
 import yaml
 from pydantic import BaseModel, Field, validator
 
-from sqly.settings import SQLY_UUID_NAMESPACE
+from .settings import SQLY_UUID_NAMESPACE
 
 
 def app_migrations_path(app):
