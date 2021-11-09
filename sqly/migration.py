@@ -12,6 +12,7 @@ import networkx as nx
 import yaml
 from pydantic import BaseModel, Field, validator
 
+from .dialect import Dialect
 from .lib import run_sync
 from .settings import SQLY_UUID_NAMESPACE
 
