@@ -3,7 +3,7 @@ import logging
 from pydantic import BaseModel
 
 from .dialect import Dialect
-from .lib import run
+from .lib import run_sync
 
 log = logging.getLogger('sqly.database')
 
@@ -39,5 +39,5 @@ class Database(BaseModel):
         if self.dialect.adaptor == 'sqlalchemy':
             connection = mod.create_engine(self.connection_string).connect()
         else:
-            connection = run(mod.connect(self.connection_string))
+            connection = run_sync(mod.connect(self.connection_string))
         return connection

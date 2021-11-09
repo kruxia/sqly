@@ -17,7 +17,10 @@ def flatten(a_list):
     return list(walk_list(a_list))
 
 
-def run(result):
+def run_sync(result):
+    """
+    If result is a coroutine, evaluate it
+    """
     if asyncio.iscoroutine(result):
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(result)

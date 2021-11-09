@@ -12,6 +12,7 @@ import networkx as nx
 import yaml
 from pydantic import BaseModel, Field, validator
 
+from .lib import run_sync
 from .settings import SQLY_UUID_NAMESPACE
 
 
@@ -170,17 +171,19 @@ class Migration(BaseModel):
               from the last applied successor down to this migration.
         3. Apply the sequence of migrations (either up or down).
         """
-        connection = connection or database.connect()
+        connection = connection or run_sync(database.connect())
         try:
-            cursor = connection.execute(
-                "select * from sqly_migration where applied is not null"
+            cursor = run_sync(
+                connection.execute(
+                    "select * from sqly_migration where applied is not null"
+                )
             )
             fields = [d[0] for d in cursor.description]
+            rows = run_sync(cursor.fetchall())
             db_migrations = {
                 m.key: m
                 for m in [
-                    cls(**record)
-                    for record in [dict(zip(fields, row)) for row in cursor]
+                    cls(**record) for record in [dict(zip(fields, row)) for row in rows]
                 ]
             }
         except Exception as exc:
@@ -242,16 +245,16 @@ class Migration(BaseModel):
         entire migration script is wrapped in a transaction.
         """
         print(self.key, direction, end=' ... ')
-        connection = connection or database.connect()
-        connection.execute('begin;')
-        connection.executescript(getattr(self, direction) or '')
+        connection = connection or run_sync(database.connect())
+        run_sync(connection.execute('begin;'))
+        run_sync(connection.executescript(getattr(self, direction) or ''))
         if direction == 'up':
             query = self.insert_query(database)
         else:
             query = self.delete_query(database)
 
-        connection.execute(*query)
-        connection.execute('commit;')
+        run_sync(connection.execute(*query))
+        run_sync(connection.execute('commit;'))
         print('OK')
 
     def insert_query(self, database):
