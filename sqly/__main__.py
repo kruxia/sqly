@@ -51,7 +51,13 @@ def migrations(apps, include_depends=False):
     required=False,
     help="Datebase to migrate; default = env $DATABASE_URL",
 )
-def migrate(migration_key, database_url=None):
+@click.option(
+    '-f',
+    '--fake',
+    is_flag=True,
+    help="If present, shows but does not run the migrations",
+)
+def migrate(migration_key, database_url=None, fake=False):
     """
     Migrate database_url to the given MIGRATION_KEY (up or dn).
     """
@@ -64,7 +70,7 @@ def migrate(migration_key, database_url=None):
     database = Database(connection_string=database_url, dialect=dialect)
 
     migration = Migration.key_load(migration_key)
-    Migration.migrate(database, migration)
+    Migration.migrate(database, migration, fake=fake)
 
 
 if __name__ == '__main__':

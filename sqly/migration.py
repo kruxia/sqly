@@ -156,7 +156,7 @@ class Migration(BaseModel):
         return nx.transitive_reduction(graph)
 
     @classmethod
-    def migrate(cls, database, migration, connection=None):
+    def migrate(cls, database, migration, connection=None, fake=False):
         """
         Migrate the database to this migration, either up or down, using the given
         (sqly) Database.
@@ -202,14 +202,14 @@ class Migration(BaseModel):
             for key in list(nx.lexicographical_topological_sort(subgraph)):
                 if key not in db_migrations:
                     migrations[key].apply(
-                        database, direction='up', connection=connection
+                        database, direction='up', connection=connection, fake=fake
                     )
         else:
             subgraph = graph.subgraph(list(graph.successors(migration.key)))
             for key in reversed(list(nx.lexicographical_topological_sort(subgraph))):
                 if key in db_migrations:
                     migrations[key].apply(
-                        database, direction='dn', connection=connection
+                        database, direction='dn', connection=connection, fake=fake
                     )
 
     def depends_migrations(self):
@@ -239,12 +239,17 @@ class Migration(BaseModel):
 
         return filepath, size
 
-    def apply(self, database, direction='up', connection=None):
+    def apply(self, database, direction='up', connection=None, fake=False):
         """
         Apply the migration (direction = 'up' or 'dn') to connection database. The
         entire migration script is wrapped in a transaction.
         """
         print(self.key, direction, end=' ... ')
+
+        if fake:
+            print('FAKE')
+            return
+
         connection = connection or run_sync(database.connect())
         run_sync(connection.execute('begin;'))
         run_sync(connection.executescript(getattr(self, direction) or ''))
