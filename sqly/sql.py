@@ -52,7 +52,7 @@ class SQL(BaseModel):
         filter_data = {k: data[k] for k in filter_keys or data}
         return Query(
             [
-                f'delete from {tablename}', 
+                f'delete from {tablename}',
                 f'where {Query.filters(filter_data)}' if filter_data else '',
                 'returning *' if self.dialect.supports_returning else '',
             ],

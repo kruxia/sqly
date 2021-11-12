@@ -1,4 +1,5 @@
 import logging
+
 from pydantic import BaseModel, Field, validator
 
 from .dialect import DEFAULT_DIALECT, Dialect
