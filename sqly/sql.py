@@ -22,7 +22,7 @@ class SQL:
             [
                 f'select {Query.fields(data)}',
                 f'from {tablename}',
-                f'where {Query.where(filter_data)}',
+                f'where {Query.filters(filter_data)}',
             ],
             dialect=self.dialect,
         ).render(data)
@@ -42,7 +42,7 @@ class SQL:
         return Query(
             [
                 f'update {tablename} set {Query.assigns(data)}',
-                f'where {Query.where(filter_data)}',
+                f'where {Query.filters(filter_data)}',
                 'returning *' if self.dialect.supports_returning else '',
             ],
             dialect=self.dialect,
@@ -52,7 +52,7 @@ class SQL:
         filter_data = {k: data[k] for k in filter_keys or data}
         return Query(
             [
-                f'delete from {tablename} where {Query.where(filter_data)}',
+                f'delete from {tablename} where {Query.filters(filter_data)}',
                 'returning *' if self.dialect.supports_returning else '',
             ],
             dialect=self.dialect,
