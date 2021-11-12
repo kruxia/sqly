@@ -1,6 +1,6 @@
 {
   "name": "sqly",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Write SQL in SQL",
   "url": "https://github.com/BlackEarth/sqly",
   "author": "Sean Harrison",

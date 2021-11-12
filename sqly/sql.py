@@ -1,20 +1,19 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
 
-from .dialect import DEFAULT_DIALECT
+from .dialect import DEFAULT_DIALECT, Dialect
 from .query import Query
 
 
-@dataclass
-class SQL:
+class SQL(BaseModel):
     """
     Interface class: Enable creating and rendering queries with a given dialect. All
     queries are rendered with that dialect.
     """
 
-    dialect: str = DEFAULT_DIALECT
+    dialect: Dialect = DEFAULT_DIALECT
 
     def query(self, query_text, data):
-        return Query(query_text, dialect=self.dialect).render(data)
+        return Query(query=query_text, dialect=self.dialect).render(data)
 
     def select(self, tablename, data, filter_keys=None):
         filter_data = {k: data[k] for k in filter_keys or data}
@@ -48,11 +47,13 @@ class SQL:
             dialect=self.dialect,
         ).render(data)
 
-    def delete(self, tablename, data, filter_keys=None):
+    def delete(self, tablename, data=None, filter_keys=None):
+        data = data or {}
         filter_data = {k: data[k] for k in filter_keys or data}
         return Query(
             [
-                f'delete from {tablename} where {Query.filters(filter_data)}',
+                f'delete from {tablename}', 
+                f'where {Query.filters(filter_data)}' if filter_data else '',
                 'returning *' if self.dialect.supports_returning else '',
             ],
             dialect=self.dialect,

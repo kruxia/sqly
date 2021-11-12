@@ -1,7 +1,7 @@
 import logging
 from pydantic import BaseModel, Field, validator
 
-from .dialect import DEFAULT_DIALECT
+from .dialect import DEFAULT_DIALECT, Dialect
 from .lib import walk_list
 
 logger = logging.getLogger(__name__)
@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class Query(BaseModel):
     query: list = Field(default_factory=list)
-    dialect: str = DEFAULT_DIALECT
+    dialect: Dialect = DEFAULT_DIALECT
 
     @validator('query', pre=True)
     def convert_query(cls, value):
