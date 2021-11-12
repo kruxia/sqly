@@ -16,7 +16,7 @@ class SQL(BaseModel):
         data = data or {}
         return Query(query=query_text, dialect=self.dialect).render(data)
 
-    def select(self, tablename, data=None, filter_keys=None):
+    def select_from(self, tablename, data=None, filter_keys=None):
         data = data or {}
         filter_data = {k: data[k] for k in filter_keys or data}
         return Query(
@@ -28,7 +28,7 @@ class SQL(BaseModel):
             dialect=self.dialect,
         ).render(data)
 
-    def delete(self, tablename, data=None, filter_keys=None):
+    def delete_from(self, tablename, data=None, filter_keys=None):
         data = data or {}
         filter_data = {k: data[k] for k in filter_keys or data}
         return Query(
@@ -40,7 +40,7 @@ class SQL(BaseModel):
             dialect=self.dialect,
         ).render(filter_data)
 
-    def insert(self, tablename, data):
+    def insert_into(self, tablename, data):
         return Query(
             query=[
                 f'insert into {tablename}',
@@ -50,7 +50,7 @@ class SQL(BaseModel):
             dialect=self.dialect,
         ).render(data)
 
-    def update(self, tablename, data, filter_keys=None):
+    def update_set(self, tablename, data, filter_keys=None):
         filter_data = {k: data[k] for k in filter_keys or data}
         return Query(
             query=[
@@ -61,7 +61,7 @@ class SQL(BaseModel):
             dialect=self.dialect,
         ).render(data)
 
-    def upsert(self, tablename, data, key_fields):
+    def upsert_into(self, tablename, data, key_fields):
         return Query(
             query=[
                 f'INSERT INTO {tablename} ({Query.fields(data)})',
