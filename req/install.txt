@@ -1,6 +1,4 @@
 click==8.0.3
-databases==0.5.3
 networkx==2.6.3
 pydantic==1.8.2
 PyYAML==6.0
-SQLAlchemy==1.4.26
