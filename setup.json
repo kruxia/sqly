@@ -17,10 +17,6 @@
       "sqly = sqly.__main__:main"
     ]
   },
-  "extras_require": {
-    "dev": [],
-    "test": []
-  },
   "package_data": {
     "": []
   },
