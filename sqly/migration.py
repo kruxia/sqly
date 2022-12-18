@@ -284,8 +284,7 @@ class Migration(BaseModel):
 
         sh = getattr(self, f"{direction}sh", None)
         if sh:
-            # TODO: run the shell script
-            pass
+            os.system(sh)
 
         if direction == 'up':
             query = self.insert_query(database)
