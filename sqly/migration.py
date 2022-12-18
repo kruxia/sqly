@@ -14,7 +14,10 @@ from pydantic import BaseModel, Field, validator
 
 from .dialect import Dialect
 from .lib import run_sync
-from .settings import SQLY_UUID_NAMESPACE
+
+SQLY_UUID_NAMESPACE = uuid.uuid3(
+    uuid.NAMESPACE_URL, 'https://github.com/BlackEarth/sqly'
+)
 
 
 def app_migrations_path(app):
@@ -28,7 +31,7 @@ def app_migrations_path(app):
 
 def make_migration_id():
     """
-    An integer with the timestamp to millisecond resolution (17 digits => bigint)
+    An integer with the UTC timestamp to millisecond resolution (17 digits => bigint)
     """
     return int(datetime.now(tz=timezone.utc).strftime('%Y%m%d%H%M%S%f')[:-3])
 
@@ -36,12 +39,19 @@ def make_migration_id():
 class Migration(BaseModel):
     id: int = Field(default_factory=make_migration_id)
     app: str
-    name: str = Field(default='')
+    name: str = Field(default_factory=str)
     depends: List[str] = Field(default_factory=list)
     applied: datetime = Field(default=None)
     doc: str = Field(default=None)
     up: str = Field(default=None)
+    upsh: str = Field(default=None)
     dn: str = Field(default=None)
+    dnsh: str = Field(default=None)
+
+    @validator('name', pre=True, always=True)
+    def name_convert(cls, value):
+        # replace non-word characters in the name with an underscore
+        return re.sub(r'[\W_]+', '_', value)
 
     @validator('depends', pre=True, always=True)
     def depends_default_empty_list(cls, value):
@@ -68,11 +78,7 @@ class Migration(BaseModel):
     @property
     def key(self):
         """
-        The Migration key is used to uniquely identify the migration in the dependency
-        graph. The key has the structure "{app}:{id}_{name}"
-
-        - app = the name of the app that the Migration is in
-        - id = the integer id for the Migration in that app
+        The key uniquely identifies the migration. Format = "{app}:{id}_{name}"
         """
         return f"{self.app}:{self.id}_{self.name or ''}"
 
@@ -133,9 +139,15 @@ class Migration(BaseModel):
         migrations = cls.all_migrations(app, *other_apps)
         graph = cls.graph(migrations)
         depends = [node for node in graph.nodes() if graph.out_degree(node) == 0]
-        name = re.sub(r'\W+', '_', name or '')
         migration = cls(
-            app=app, name=name or '', depends=depends, doc=None, up=None, dn=None
+            app=app,
+            name=name,
+            depends=depends,
+            doc=None,
+            up=None,
+            dn=None,
+            upsh=None,
+            dnsh=None,
         )
         return migration
 
@@ -165,7 +177,7 @@ class Migration(BaseModel):
             select = connection.execute
 
         try:
-            rows = run_sync(select("select * from sqly_migration"))
+            rows = run_sync(select("select * from sqly_migrations"))
             if database.dialect == Dialect.ASYNCPG:
                 records = rows
             else:
@@ -256,7 +268,7 @@ class Migration(BaseModel):
         print(self.key, direction, end=' ... ')
 
         if dryrun:
-            print('FAKE')
+            print('DRY RUN')
             return
 
         connection = connection or run_sync(database.connect())
@@ -270,6 +282,11 @@ class Migration(BaseModel):
             else:
                 run_sync(connection.executescript(sql))
 
+        sh = getattr(self, f"{direction}sh", None)
+        if sh:
+            # TODO: run the shell script
+            pass
+
         if direction == 'up':
             query = self.insert_query(database)
         else:
@@ -281,7 +298,7 @@ class Migration(BaseModel):
 
     def insert_query(self, database):
         """
-        Insert this migration into the sqly_migration table.
+        Insert this migration into the sqly_migrations table.
         """
         data = {k: v for k, v in self.dict(exclude_none=True).items()}
         if not isinstance(data.get('depends'), str):
@@ -289,11 +306,11 @@ class Migration(BaseModel):
         keys = [k for k in data.keys()]
         params = [f':{k}' for k in keys]
         sql = f"""
-            INSERT INTO sqly_migration ({','.join(keys)})
+            INSERT INTO sqly_migrations ({','.join(keys)})
             VALUES ({','.join(params)});
             """
         return database.dialect.render(sql, data)
 
     def delete_query(self, database):
-        sql = "DELETE FROM sqly_migration where id=:id"
+        sql = "DELETE FROM sqly_migrations where id=:id"
         return database.dialect.render(sql, self.dict())

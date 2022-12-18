@@ -2,15 +2,15 @@ import logging
 
 from pydantic import BaseModel, Field, validator
 
-from .dialect import DEFAULT_DIALECT, Dialect
-from .lib import walk_list
+from .dialect import Dialect
+from .lib import walk
 
 logger = logging.getLogger(__name__)
 
 
 class Query(BaseModel):
     query: list = Field(default_factory=list)
-    dialect: Dialect = DEFAULT_DIALECT
+    dialect: Dialect
 
     @validator('query', pre=True)
     def convert_query(cls, value):
@@ -37,7 +37,7 @@ class Query(BaseModel):
         return ' AND '.join(f'{key}=:{key}' for key in data)
 
     def __str__(self):
-        return ' '.join([str(q) for q in walk_list(self.query) if q]).strip()
+        return ' '.join([str(q) for q in walk(self.query) if q]).strip()
 
     def render(self, data=None):
         """
