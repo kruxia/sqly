@@ -284,6 +284,8 @@ class Migration(BaseModel):
 
         sh = getattr(self, f"{direction}sh", None)
         if sh:
+            # run the sh cmd relative to the directory in which the migration is defined
+            os.chdir(Migration.key_filepath(self.key))
             os.system(sh)
 
         if direction == 'up':
