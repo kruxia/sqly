@@ -16,7 +16,7 @@ from .dialect import Dialect
 from .lib import run_sync
 
 SQLY_UUID_NAMESPACE = uuid.uuid3(
-    uuid.NAMESPACE_URL, 'https://github.com/BlackEarth/sqly'
+    uuid.NAMESPACE_URL, 'https://github.com/kruxia/sqly'
 )
 
 

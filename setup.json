@@ -1,10 +1,10 @@
 {
   "name": "sqly",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Write SQL in SQL",
-  "url": "https://github.com/BlackEarth/sqly",
+  "url": "https://github.com/kruxia/sqly",
   "author": "Sean Harrison",
-  "author_email": "sah@blackearth.us",
+  "author_email": "sah@kruxia.com",
   "license": "MPL 2.0",
   "classifiers": [
     "Development Status :: 3 - Alpha",
