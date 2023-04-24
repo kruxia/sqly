@@ -47,8 +47,12 @@ if __name__ == "__main__":
             "pyodbc": [
                 "pyodbc~=4.0.39",
             ],
+            # The following packages wrap the DB-API with their own interfaces.
             "sqlalchemy": [
-                "sqlalchemy~=2.0.10",
+                "sqlalchemy",
+            ],
+            "databases": [
+                "databases",
             ],
         },
         **CONFIG

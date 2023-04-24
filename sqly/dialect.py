@@ -24,6 +24,7 @@ class Dialect(Enum):
     PYODBC = "pyodbc"
     SQLALCHEMY = "sqlalchemy"
     SQLITE = "sqlite"
+    DATABASES = "databases"
 
     @property
     def is_async(self):
@@ -41,6 +42,7 @@ class Dialect(Enum):
             self.PYODBC: OutputFormat.QMARK,
             self.SQLALCHEMY: OutputFormat.PERCENT,
             self.SQLITE: OutputFormat.QMARK,
+            self.DATABASES: OutputFormat.COLON,
         }[self]
 
     @property
@@ -51,6 +53,7 @@ class Dialect(Enum):
             self.PYODBC: "pyodbc",
             self.SQLALCHEMY: "sqlalchemy",
             self.SQLITE: "sqlite3",
+            self.DATABASES: "databases",
         }[self]
 
     def load_adaptor(self):
