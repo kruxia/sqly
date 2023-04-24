@@ -1,45 +1,87 @@
-from pydantic import BaseModel, Field, validator
+class Q:
+    """
+    Convenience methods for building dynamic queries. Examples:
 
-from .lib import walk
-
-
-class Query(BaseModel):
-    query: list = Field(default_factory=list)
-
-    @validator("query", pre=True)
-    def convert_query(cls, value):
-        # allow the query to be a single string
-        if isinstance(value, str):
-            value = [value]
-        return value
+    >>> d = {"name": "Cheeseshop"}
+    >>> f"INSERT INTO tablename ({Q.fields(d)}) VALUES ({Q.params(d)})"
+    'INSERT INTO tablename (name) VALUES (:name)'
+    >>> f"SELECT ({Q.fields(d)}) FROM tablename WHERE {Q.filters(d)}"
+    'SELECT (name) FROM tablename WHERE name = :name'
+    >>> d["id"] = 1
+    >>> " ".join(
+    ...     "UPDATE tablename SET",
+    ...     Q.assigns(d, excl=['id']),
+    ...     "WHERE",
+    ...     Q.filters(d, incl=['id'])
+    ... )
+    'UPDATE tablename SET name = :name WHERE id = :id'
+    >>> f"DELETE FROM tablename WHERE {Q.filters(d, incl=['name'])}"
+    'DELETE FROM tablename WHERE name = :name'
+    """
 
     @classmethod
-    def fields(cls, data, excludes=None, prefix=None):
+    def fields(cls, data, incl=None, excl=None, pre=None) -> str:
+        """
+        Render a comma-separated list of field names from the given data. Use: E.g., for
+        dynamically specifying SELECT or INSERT field lists.
+
+        * data = the data from which to use the field names.
+        * excl = a list / set of keys to exclude.
+        * pre = a tablename prefix to use with each field name.
+        """
         return ", ".join(
-            f"{prefix+'.' if prefix else ''}{key}"
-            for key in data
-            if key not in (excludes or [])
+            f"{pre+'.' if pre else ''}{key}"
+            for key in cls.keys(data, incl=incl, excl=excl)
         )
 
     @classmethod
-    def params(cls, data, excludes=None):
-        return ", ".join(f":{key}" for key in data if key not in (excludes or []))
+    def params(cls, data, incl=None, excl=None) -> str:
+        """
+        Render a comma-separated list of parameters from the given data. Use: E.g.,
+        dynamically specifying INSERT parameter lists.
+
+        * data = the data from which to use the field names.
+        * excl = a list / set of keys to exclude.
+        """
+        return ", ".join(f":{key}" for key in cls.keys(data, incl=incl, excl=excl))
 
     @classmethod
-    def assigns(cls, data, excludes=None, prefix=None):
+    def assigns(cls, data, incl=None, excl=None, pre=None) -> str:
+        """
+        Render a comma-separated list of field to parameter assignments from the given
+        data. Use: E.g., for dynamically specifying UPDATE field lists.
+
+        * data = the data from which to use the field names.
+        * excl = a list / set of keys to exclude.
+        * pre = a tablename prefix to use with each field name.
+        """
         return ", ".join(
-            f"{prefix+'.' if prefix else ''}{key}=:{key}"
-            for key in data
-            if key not in (excludes or [])
+            f"{pre+'.' if pre else ''}{key} = :{key}"
+            for key in cls.keys(data, incl=incl, excl=excl)
         )
 
     @classmethod
-    def filters(cls, data, excludes=None, prefix=None):
+    def filters(cls, data, incl=None, excl=None, pre=None, operator="=") -> str:
+        """
+        Render an AND-separated list of field to parameter filters from the given
+        data. Use: E.g., for dynamically specifying WHERE-clause filters.
+
+        * data = the data from which to use the field names.
+        * excl = a list / set of keys to exclude.
+        * pre = a tablename prefix to use with each field name.
+        * operator = the operator to use in the filter (default `=`).
+        """
         return " AND ".join(
-            f"{prefix+'.' if prefix else ''}{key}=:{key}"
-            for key in data
-            if key not in (excludes or [])
+            f"{pre+'.' if pre else ''}{key} {operator} :{key}"
+            for key in cls.keys(data, incl=incl, excl=excl)
         )
 
-    def __str__(self):
-        return " ".join([str(q) for q in walk(self.query) if q]).strip()
+    @classmethod
+    def keys(cls, data, incl=None, excl=None) -> list:
+        return (
+            incl
+            if incl
+            else [key for key in data if key not in excl]
+            if excl
+            else list(data)
+        )
