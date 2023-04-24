@@ -121,9 +121,10 @@ class Migration(BaseModel):
 
     @classmethod
     def all_migrations(cls, *apps):
-        migrations = set()
-        for app in apps:
-            migrations |= cls.app_migrations(app)
+        # always depend on sqly
+        migrations = cls.app_migrations("sqly")
+        for app in [app for app in apps if app not in ["sqly"]]:
+            migrations |= cls.app_migrations(app, include_depends=True)
 
         return migrations
 
