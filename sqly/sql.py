@@ -15,14 +15,14 @@ class SQL(BaseModel):
 
     dialect: Dialect
 
-    def render(self, query, **params):
+    def render(self, query, data=None):
         """
         Render a query string and its parameters for this SQL dialect.
 
         Arguments:
 
         * query: a string or Query instance.
-        * params: a keyword dict used to render the query.
+        * data: a keyword dict used to render the query.
 
         Returns a 2-tuple:
 
@@ -83,13 +83,13 @@ class SQL(BaseModel):
             # parameter_values is a list of values
             parameter_values = [
                 json.dumps(val) if isinstance(val, dict) else val
-                for val in [params[field] for field in fields]
+                for val in [data[field] for field in fields]
             ]
         else:
             # parameter_values is a dict of key:value fields
             parameter_values = {
                 key: json.dumps(val) if isinstance(val, (dict, list, tuple)) else val
-                for key, val in {field: params[field] for field in fields}.items()
+                for key, val in {field: data[field] for field in fields}.items()
             }
 
         # 6. Return a tuple formatted for this Dialect

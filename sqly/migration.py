@@ -282,6 +282,7 @@ class Migration(BaseModel):
         sql = getattr(self, direction, None)
         if sql:
             # (asyncpg does executescript via regular execute)
+            print('\n' + sql)
             if database.dialect == database.dialect.ASYNCPG:
                 run_sync(connection.execute(sql))
             else:
@@ -315,7 +316,7 @@ class Migration(BaseModel):
             INSERT INTO sqly_migrations ({','.join(keys)})
             VALUES ({','.join(params)});
             """
-        return SQL(database.dialect).render(sql, data)
+        return SQL(dialect=database.dialect).render(sql, data)
 
     def delete_query(self, database):
         sql = """
@@ -324,4 +325,4 @@ class Migration(BaseModel):
                 and ts=:ts
                 and name=:name
             """
-        return SQL(database.dialect).render(sql, self.dict())
+        return SQL(dialect=database.dialect).render(sql, self.dict())
