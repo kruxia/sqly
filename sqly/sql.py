@@ -21,7 +21,7 @@ class SQL(BaseModel):
 
         Arguments:
 
-        * query: a string or Query instance.
+        * query: a string or iterator of strings.
         * data: a keyword dict used to render the query.
 
         Returns a 2-tuple:
@@ -60,7 +60,7 @@ class SQL(BaseModel):
         if isinstance(query, str) or hasattr(query, "__str__"):
             query_str = str(query)
         elif hasattr(query, "__iter__"):
-            query_str = "\n".join(walk(query))
+            query_str = "\n".join(str(q) for q in walk(query))
         else:
             raise ValueError(f"Query has unsupported type: {type(query)}")
 
