@@ -14,44 +14,46 @@ from pydantic import BaseModel, Field, validator
 
 from .dialect import Dialect
 from .lib import run_sync
+from .sql import SQL
 
-SQLY_UUID_NAMESPACE = uuid.uuid3(uuid.NAMESPACE_URL, 'https://github.com/kruxia/sqly')
+# enable repeatable UUID-as-hash for migration keys by using the repo as the namespace.
+SQLY_UUID_NAMESPACE = uuid.uuid3(uuid.NAMESPACE_URL, "https://github.com/kruxia/sqly")
 
 
 def app_migrations_path(app):
     """
-    For a given app name, get the path to the migrations directory.
+    For a given app name, get the path to its migrations directory.
     """
     mod = import_module(app)
     mod_filepath = Path(mod.__file__).parent
-    return mod_filepath / 'migrations'
+    return mod_filepath / "migrations"
 
 
-def make_migration_id():
+def make_migration_timestamp():
     """
     An integer with the UTC timestamp to millisecond resolution (17 digits => bigint)
     """
-    return int(datetime.now(tz=timezone.utc).strftime('%Y%m%d%H%M%S%f')[:-3])
+    return int(datetime.now(tz=timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3])
 
 
 class Migration(BaseModel):
-    id: int = Field(default_factory=make_migration_id)
     app: str
+    ts: int = Field(default_factory=make_migration_timestamp)
     name: str = Field(default_factory=str)
     depends: List[str] = Field(default_factory=list)
-    applied: datetime = Field(default=None)
-    doc: str = Field(default=None)
-    up: str = Field(default=None)
-    upsh: str = Field(default=None)
-    dn: str = Field(default=None)
-    dnsh: str = Field(default=None)
+    applied: datetime | None = Field(default=None, exclude=True)
+    doc: str | None = Field(default=None)
+    up: str | None = Field(default=None)
+    upsh: str | None = Field(default=None)
+    dn: str | None = Field(default=None)
+    dnsh: str | None = Field(default=None)
 
-    @validator('name', pre=True, always=True)
+    @validator("name", pre=True, always=True)
     def name_convert(cls, value):
         # replace non-word characters in the name with an underscore
-        return re.sub(r'[\W_]+', '_', value)
+        return re.sub(r"[\W_]+", "_", value)
 
-    @validator('depends', pre=True, always=True)
+    @validator("depends", pre=True, always=True)
     def depends_default_empty_list(cls, value):
         if isinstance(value, str):
             return json.loads(value)
@@ -60,11 +62,11 @@ class Migration(BaseModel):
 
     def __repr__(self):
         return (
-            'Migration('
-            + ', '.join(
-                f'{key}={getattr(self, key)!r}' for key in ['key', 'depends', 'applied']
+            "Migration("
+            + ", ".join(
+                f"{key}={getattr(self, key)!r}" for key in ["key", "depends", "applied"]
             )
-            + ')'
+            + ")"
         )
 
     def __str__(self):
@@ -78,18 +80,18 @@ class Migration(BaseModel):
         """
         The key uniquely identifies the migration. Format = "{app}:{id}_{name}"
         """
-        return f"{self.app}:{self.id}_{self.name or ''}"
+        return f"{self.app}:{self.ts}_{self.name or ''}"
 
     @property
     def filename(self):
-        return f'{self.id}_{self.name or ""}.yaml'
+        return f'{self.ts}_{self.name or ""}.yaml'
 
     @classmethod
     def load(cls, filepath):
         with open(filepath) as f:
             data = yaml.safe_load(f.read())
 
-        return Migration.parse_obj(data)
+        return cls.parse_obj(data)
 
     @classmethod
     def key_load(cls, migration_key):
@@ -97,23 +99,23 @@ class Migration(BaseModel):
 
     @classmethod
     def key_filepath(cls, migration_key):
-        app, basename = migration_key.split(':')
+        app, basename = migration_key.split(":")
         return app_migrations_path(app) / f"{basename}.yaml"
 
     @classmethod
     def app_migrations(cls, app, include_depends=True):
         """
-        For a given module name, get the existing migrations in that module. If
-        include_depends is True (default), also include depends migrations from any app.
+        For a given module name, get the migrations in that module. If include_depends
+        is True (default), also include depends migrations from other apps.
         """
-        migration_filenames = glob(str(app_migrations_path(app) / '*.yaml'))
+        migration_filenames = glob(str(app_migrations_path(app) / "*.yaml"))
         migrations = set(cls.load(filename) for filename in migration_filenames)
         if include_depends is True:
-            dms = set()
+            dependencies = set()
             for migration in migrations:
-                dms |= migration.depends_migrations()
+                dependencies |= migration.depends_migrations()
 
-            migrations |= dms
+            migrations |= dependencies
 
         return migrations
 
@@ -133,6 +135,10 @@ class Migration(BaseModel):
         <https://networkx.org/documentation/stable/reference/classes/generated/networkx.DiGraph.out_degree.html>.
         For a worked example, see:
         <https://stackoverflow.com/questions/31946253/find-end-nodes-leaf-nodes-in-radial-tree-networkx-graph/31953001>.
+
+        NOTE: The existing migration graph is calculated from the filesystem, not what
+        is applied in any database. (Migrations from other branches might currently be
+        applied in the database; that is a concern for another time.)
         """
         migrations = cls.all_migrations(app, *other_apps)
         graph = cls.graph(migrations)
@@ -220,7 +226,7 @@ class Migration(BaseModel):
             for key in nx.lexicographical_topological_sort(subgraph):
                 if key not in db_migrations:
                     migrations[key].apply(
-                        database, direction='up', connection=connection, dryrun=dryrun
+                        database, direction="up", connection=connection, dryrun=dryrun
                     )
         else:
             # apply 'dn' migrations for all descendants in reverse
@@ -228,18 +234,18 @@ class Migration(BaseModel):
             for key in reversed(list(nx.lexicographical_topological_sort(subgraph))):
                 if key in db_migrations:
                     migrations[key].apply(
-                        database, direction='dn', connection=connection, dryrun=dryrun
+                        database, direction="dn", connection=connection, dryrun=dryrun
                     )
 
     def depends_migrations(self):
         """
         All migrations that this migration depends on, recursively.
         """
-        dms = set()
+        dependencies = set()
         for depend in self.depends:
             depend_migration = self.load(self.key_filepath(depend))
-            dms |= {depend_migration} | depend_migration.depends_migrations()
-        return dms
+            dependencies |= {depend_migration} | depend_migration.depends_migrations()
+        return dependencies
 
     def ancestors(self, graph):
         return nx.ancestors(graph, self.key)
@@ -250,27 +256,27 @@ class Migration(BaseModel):
     def yaml(self, **kwargs):
         return yaml.dump(self.dict(**kwargs), default_flow_style=False, sort_keys=False)
 
-    def save(self):
+    def save(self, **kwargs):
         filepath = app_migrations_path(self.app) / self.filename
         os.makedirs(filepath.parent, exist_ok=True)
-        with open(filepath, 'wb') as f:
-            size = f.write(self.yaml().encode())
+        with open(filepath, "wb") as f:
+            size = f.write(self.yaml(**kwargs).encode())
 
         return filepath, size
 
-    def apply(self, database, direction='up', connection=None, dryrun=False):
+    def apply(self, database, direction="up", connection=None, dryrun=False):
         """
         Apply the migration (direction = 'up' or 'dn') to connection database. The
         entire migration script is wrapped in a transaction.
         """
-        print(self.key, direction, end=' ... ')
+        print(self.key, direction, end=" ... ")
 
         if dryrun:
-            print('DRY RUN')
+            print("DRY RUN")
             return
 
         connection = connection or run_sync(database.connect())
-        run_sync(connection.execute('begin;'))
+        run_sync(connection.execute("begin;"))
 
         sql = getattr(self, direction, None)
         if sql:
@@ -283,33 +289,38 @@ class Migration(BaseModel):
         sh = getattr(self, f"{direction}sh", None)
         if sh:
             # run the sh cmd relative to the directory in which the migration is defined
-            os.chdir(Migration.key_filepath(self.key))
+            os.chdir(self.__class__.key_filepath(self.key))
             os.system(sh)
 
-        if direction == 'up':
+        if direction == "up":
             query = self.insert_query(database)
         else:
             query = self.delete_query(database)
 
         run_sync(connection.execute(*query))
-        run_sync(connection.execute('commit;'))
-        print('OK')
+        run_sync(connection.execute("commit;"))
+        print("OK")
 
     def insert_query(self, database):
         """
         Insert this migration into the sqly_migrations table.
         """
         data = {k: v for k, v in self.dict(exclude_none=True).items()}
-        if not isinstance(data.get('depends'), str):
-            data['depends'] = json.dumps(data.get('depends') or [])
+        if not isinstance(data.get("depends"), str):
+            data["depends"] = json.dumps(data.get("depends") or [])
         keys = [k for k in data.keys()]
-        params = [f':{k}' for k in keys]
+        params = [f":{k}" for k in keys]
         sql = f"""
             INSERT INTO sqly_migrations ({','.join(keys)})
             VALUES ({','.join(params)});
             """
-        return database.dialect.render(sql, data)
+        return SQL(database.dialect).render(sql, data)
 
     def delete_query(self, database):
-        sql = "DELETE FROM sqly_migrations where id=:id"
-        return database.dialect.render(sql, self.dict())
+        sql = """
+            DELETE FROM sqly_migrations
+            WHERE app=:app
+                and ts=:ts
+                and name=:name
+            """
+        return SQL(database.dialect).render(sql, self.dict())

@@ -1,5 +1,5 @@
-id: 20211105034808482
 app: sqly
+ts: 20211105034808482
 name: init
 depends: []
 doc: >-
@@ -9,12 +9,15 @@ doc: >-
   if we're on a git branch where some migrations don't exist in the code.
 
 up: |-
-  create table sqly_migrations (
-    id          bigint primary key,
-    app         varchar not null,
-    name        varchar not null default '',
-    depends     jsonb default '[]'::jsonb,
-    applied     timestamptz default current_timestamp,
+  CREATE TABLE sqly_migrations (
+    app         varchar NOT NULL,
+    ts          bigint NOT NULL,
+    name        varchar NOT NULL DEFAULT '',
+    
+    PRIMARY KEY (app, ts, name),
+
+    depends     jsonb DEFAULT '[]'::jsonb,
+    applied     timestamptz DEFAULT current_timestamp,
     doc         text,
     up          text,   -- 'up' sql 
     upsh        text,   -- 'up' shell script (run after sql if both are defined)
@@ -22,4 +25,4 @@ up: |-
     dnsh        text    -- 'down' shell script (run after sql if both are defined)
   );
 
-dn: drop table sqly_migrations;
+dn: DROP TABLE sqly_migrations;
