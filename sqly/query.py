@@ -1,12 +1,10 @@
 from pydantic import BaseModel, Field, validator
 
-from .dialect import Dialect
 from .lib import walk
 
 
 class Query(BaseModel):
     query: list = Field(default_factory=list)
-    dialect: Dialect
 
     @validator("query", pre=True)
     def convert_query(cls, value):
@@ -16,21 +14,32 @@ class Query(BaseModel):
         return value
 
     @classmethod
-    def fields(cls, data):
-        return ", ".join(str(key) for key in data)
+    def fields(cls, data, excludes=None, prefix=None):
+        return ", ".join(
+            f"{prefix+'.' if prefix else ''}{key}"
+            for key in data
+            if key not in (excludes or [])
+        )
 
     @classmethod
-    def params(cls, data):
-        return ", ".join(f":{key}" for key in data)
+    def params(cls, data, excludes=None):
+        return ", ".join(f":{key}" for key in data if key not in (excludes or []))
 
     @classmethod
-    def assigns(cls, data, excludes=None):
-        excludes = excludes or []
-        return ", ".join(f"{key}=:{key}" for key in data if key not in excludes)
+    def assigns(cls, data, excludes=None, prefix=None):
+        return ", ".join(
+            f"{prefix+'.' if prefix else ''}{key}=:{key}"
+            for key in data
+            if key not in (excludes or [])
+        )
 
     @classmethod
-    def filters(cls, data):
-        return " AND ".join(f"{key}=:{key}" for key in data)
+    def filters(cls, data, excludes=None, prefix=None):
+        return " AND ".join(
+            f"{prefix+'.' if prefix else ''}{key}=:{key}"
+            for key in data
+            if key not in (excludes or [])
+        )
 
     def __str__(self):
         return " ".join([str(q) for q in walk(self.query) if q]).strip()
