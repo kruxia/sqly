@@ -31,34 +31,34 @@ if __name__ == "__main__":
         include_package_data=True,
         install_requires=[
             "click~=8.1.3",
-            "networkx~=2.8.8",
-            "pydantic~=1.10.2",
+            "networkx~=3.1",
+            "pydantic~=1.10.7",
             "PyYAML~=6.0",
         ],
         extras_require={
             "dev": [
-                "black~=22.12.0",
-                "ipython~=8.7.0",
-                "isort~=5.11.3",
+                "black~=23.3.0",
+                "ipython~=8.12.0",
+                "isort~=5.12.0",
                 "twine~=4.0.2",
             ],
             "test": [
-                "black~=22.12.0",
+                "black~=23.3.0",
                 "flake8~=6.0.0",
-                "pytest~=7.2.0",
+                "pytest~=7.3.1",
                 "pytest-cov~=4.0.0",
             ],
             "asyncpg": [
                 "asyncpg~=0.27.0",
             ],
             "psycopg2": [
-                "psycopg2-binary~=2.9.5",
+                "psycopg2-binary~=2.9.6",
             ],
             "pyodbc": [
-                "pyodbc~=4.0.35",
+                "pyodbc~=4.0.39",
             ],
             "sqlalchemy": [
-                "sqlalchemy~=1.4.45",
+                "sqlalchemy~=2.0.10",
             ],
         },
         **CONFIG

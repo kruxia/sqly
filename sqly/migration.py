@@ -15,9 +15,7 @@ from pydantic import BaseModel, Field, validator
 from .dialect import Dialect
 from .lib import run_sync
 
-SQLY_UUID_NAMESPACE = uuid.uuid3(
-    uuid.NAMESPACE_URL, 'https://github.com/kruxia/sqly'
-)
+SQLY_UUID_NAMESPACE = uuid.uuid3(uuid.NAMESPACE_URL, 'https://github.com/kruxia/sqly')
 
 
 def app_migrations_path(app):

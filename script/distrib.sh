@@ -7,4 +7,4 @@ python setup.py sdist bdist_wheel --universal
 twine upload dist/*
 rm -rf "$PACKAGE_PATH/build"
 rm -rf "$PACKAGE_PATH/dist"
-for f in `ls | grep \.egg-info`; do rm -rf "$PACKAGE_PATH/$f"; done
+rm -rf "$PACKAGE_PATH/*.egg-info"
