@@ -15,7 +15,10 @@ def main():
 
 @main.command()
 @click.option(
-    "-n", "--name", required=False, help="A couple words describing the Migration's purpose"
+    "-n",
+    "--name",
+    required=False,
+    help="A couple words describing the Migration's purpose",
 )
 @click.argument("app")
 @click.argument("other_apps", nargs=-1)
@@ -25,7 +28,7 @@ def migration(app, other_apps, name):
     OTHER_APPS
     """
     migration = Migration.create(app, *other_apps, name=name)
-    migration.save(exclude={'applied', 'upsh', 'dnsh'})
+    migration.save(exclude={"applied", "upsh", "dnsh"})
     print(f"Created migration: {migration.key}")
     print("    depends:\n      -", "\n      - ".join(migration.depends or "[]"))
 
@@ -59,11 +62,7 @@ def migrations(apps, include_depends=False):
     required=False,
     help="Datebase to migrate; default = env $DATABASE_URL",
 )
-@click.option(
-    "-d",
-    "--dialect",
-    required=False
-)
+@click.option("-d", "--dialect", required=False)
 @click.option(
     "-r",
     "--dryrun",

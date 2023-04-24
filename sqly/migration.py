@@ -282,7 +282,7 @@ class Migration(BaseModel):
         sql = getattr(self, direction, None)
         if sql:
             # (asyncpg does executescript via regular execute)
-            print('\n' + sql)
+            print("\n" + sql)
             if database.dialect == database.dialect.ASYNCPG:
                 run_sync(connection.execute(sql))
             else:
