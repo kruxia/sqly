@@ -46,7 +46,7 @@ class Q:
         return ", ".join(f":{key}" for key in cls.keys(data, incl=incl, excl=excl))
 
     @classmethod
-    def assigns(cls, data, incl=None, excl=None, pre=None) -> str:
+    def assigns(cls, data, incl=None, excl=None, pre=None, op="=", join=",") -> str:
         """
         Render a comma-separated list of field to parameter assignments from the given
         data. Use: E.g., for dynamically specifying UPDATE field lists.
@@ -54,27 +54,17 @@ class Q:
         * data = the data from which to use the field names.
         * excl = a list / set of keys to exclude.
         * pre = a tablename prefix to use with each field name.
+        * op = the operator to use in the assign (default `=`).
+        * join = the operator to join phrases by (default `,`)
         """
-        return ", ".join(
-            f"{pre+'.' if pre else ''}{key} = :{key}"
+        return f" {join} ".join(
+            f"{pre+'.' if pre else ''}{key} {op} :{key}"
             for key in cls.keys(data, incl=incl, excl=excl)
         )
 
     @classmethod
-    def filters(cls, data, incl=None, excl=None, pre=None, operator="=") -> str:
-        """
-        Render an AND-separated list of field to parameter filters from the given
-        data. Use: E.g., for dynamically specifying WHERE-clause filters.
-
-        * data = the data from which to use the field names.
-        * excl = a list / set of keys to exclude.
-        * pre = a tablename prefix to use with each field name.
-        * operator = the operator to use in the filter (default `=`).
-        """
-        return " AND ".join(
-            f"{pre+'.' if pre else ''}{key} {operator} :{key}"
-            for key in cls.keys(data, incl=incl, excl=excl)
-        )
+    def filters(cls, data, incl=None, excl=None, pre=None, op="=", join="AND") -> str:
+        return cls.assigns(data, incl=incl, excl=excl, pre=pre, op=op, join=join)
 
     @classmethod
     def keys(cls, data, incl=None, excl=None) -> list:
