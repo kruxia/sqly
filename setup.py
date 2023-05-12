@@ -20,10 +20,7 @@ if __name__ == "__main__":
         packages=find_packages(exclude=["contrib", "docs", "tests"]),
         include_package_data=True,
         install_requires=[
-            "click~=8.1.3",
-            "networkx~=3.1",
             "pydantic~=1.10.7",
-            "PyYAML~=6.0",
         ],
         extras_require={
             "dev": [
@@ -37,6 +34,11 @@ if __name__ == "__main__":
                 "flake8~=6.0.0",
                 "pytest~=7.3.1",
                 "pytest-cov~=4.0.0",
+            ],
+            "migrate": [
+                "click~=8.1.3",
+                "networkx~=3.1",
+                "PyYAML~=6.0",
             ],
             "asyncpg": [
                 "asyncpg~=0.27.0",
