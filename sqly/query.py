@@ -63,12 +63,12 @@ class Q:
         )
 
     @classmethod
-    def filter(cls, key, val=None, op="="):
-        return f"{key} {op} {val or ':' + key}"
-
-    @classmethod
     def filters(cls, data, incl=None, excl=None, pre=None, op="=", join="AND") -> str:
         return cls.assigns(data, incl=incl, excl=excl, pre=pre, op=op, join=join)
+
+    @classmethod
+    def filter(cls, key, val=None, op="="):
+        return f"{key} {op} {val or ':' + key}"
 
     @classmethod
     def keys(cls, data, incl=None, excl=None) -> list:
@@ -79,3 +79,43 @@ class Q:
             if excl
             else list(data)
         )
+
+    @classmethod
+    def select(cls, relation, fields=None, filters=None, orderby=None, limit=None):
+        fields = fields or ["*"]
+        filters = filters or []
+        query = [f"SELECT {cls.fields(fields)} FROM {relation}"]
+        if filters:
+            query.append(f"WHERE {cls.filters(filters)}")
+        if orderby:
+            query.append(f"ORDER BY {orderby}")
+        if limit:   
+            query.append(f"LIMIT {limit}")
+        return ' '.join(query)
+        
+    @classmethod
+    def insert(cls, relation, data):
+        query = [
+            f"INSERT INTO {relation}",
+            f"({cls.fields(data)})",
+            f"VALUES ({cls.params(data)})"
+        ]
+        return ' '.join(query)
+    
+    @classmethod
+    def update(cls, relation, data, filters):
+        query = [
+            f"UPDATE {relation} SET {cls.assigns(data)}",
+            f"WHERE {cls.filters(filters)}"
+        ]
+        return ' '.join(query)
+
+    @classmethod
+    def delete(cls, relation, filters):
+        query = [
+            f"DELETE FROM {relation}",
+            f"WHERE {cls.filters(filters)}",
+        ]
+        return ' '.join(query)
+    
+    

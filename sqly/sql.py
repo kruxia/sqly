@@ -15,6 +15,10 @@ class SQL:
 
     dialect: Dialect
 
+    def __post_init__(self):
+        if isinstance(self.dialect, str):
+            self.dialect = Dialect(self.dialect)
+
     def render(self, query, data=None):
         """
         Render a query string and its parameters for this SQL dialect.

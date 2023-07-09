@@ -11,7 +11,7 @@ doc: >-
 up: |-
   CREATE TABLE sqly_migrations (
     app         varchar NOT NULL,
-    ts          bigint NOT NULL,
+    ts          bigint  NOT NULL,
     name        varchar NOT NULL DEFAULT '',
     
     depends     jsonb DEFAULT '[]',
