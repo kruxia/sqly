@@ -63,6 +63,10 @@ class Q:
         )
 
     @classmethod
+    def filter(cls, key, val=None, op="="):
+        return f"{key} {op} {val or ':' + key}"
+
+    @classmethod
     def filters(cls, data, incl=None, excl=None, pre=None, op="=", join="AND") -> str:
         return cls.assigns(data, incl=incl, excl=excl, pre=pre, op=op, join=join)
 

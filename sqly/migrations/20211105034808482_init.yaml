@@ -18,9 +18,7 @@ up: |-
     applied     timestamptz DEFAULT current_timestamp,
     doc         text,
     up          text,   -- 'up' sql 
-    upsh        text,   -- 'up' shell script (run after sql if both are defined)
     dn          text,   -- 'down' sql
-    dnsh        text,   -- 'down' shell script (run after sql if both are defined)
 
     PRIMARY KEY (app, ts, name)
   );

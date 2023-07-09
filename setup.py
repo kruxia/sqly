@@ -19,9 +19,7 @@ if __name__ == "__main__":
         long_description_content_type="text/markdown",
         packages=find_packages(exclude=["contrib", "docs", "tests"]),
         include_package_data=True,
-        install_requires=[
-            "pydantic~=1.10.7",
-        ],
+        install_requires=[],
         extras_require={
             "dev": [
                 "black~=23.3.0",
@@ -35,21 +33,23 @@ if __name__ == "__main__":
                 "pytest~=7.3.1",
                 "pytest-cov~=4.0.0",
             ],
-            "migrate": [
+            "migration": [
                 "click~=8.1.3",
                 "networkx~=3.1",
                 "PyYAML~=6.0",
             ],
+            # postgresql DB interfaces
             "asyncpg": [
                 "asyncpg~=0.27.0",
             ],
             "psycopg2": [
                 "psycopg2-binary~=2.9.6",
             ],
+            # all others can be done via ODBC
             "pyodbc": [
                 "pyodbc~=4.0.39",
             ],
-            # The following packages wrap the DB-API with their own interfaces.
+            # DB interface packages that wrap the DB-API.
             "sqlalchemy": [
                 "sqlalchemy",
             ],

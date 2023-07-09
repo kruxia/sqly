@@ -2,15 +2,14 @@ import json
 import os
 import re
 import uuid
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from glob import glob
 from importlib import import_module
 from pathlib import Path
-from typing import List
 
 import networkx as nx
 import yaml
-from pydantic import BaseModel, Field, validator
 
 from .dialect import Dialect
 from .lib import run_sync
@@ -29,40 +28,38 @@ def app_migrations_path(app):
     return mod_filepath / "migrations"
 
 
-def make_migration_timestamp():
+def migration_timestamp():
     """
     An integer with the UTC timestamp to millisecond resolution (17 digits => bigint)
     """
     return int(datetime.now(tz=timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3])
 
 
-class Migration(BaseModel):
+@dataclass
+class Migration:
     app: str
-    ts: int = Field(default_factory=make_migration_timestamp)
-    name: str = Field(default_factory=str)
-    depends: List[str] = Field(default_factory=list)
-    applied: datetime | None = Field(default=None, exclude=True)
-    doc: str | None = Field(default=None)
-    up: str | None = Field(default=None)
-    upsh: str | None = Field(default=None)
-    dn: str | None = Field(default=None)
-    dnsh: str | None = Field(default=None)
+    ts: int = field(default_factory=migration_timestamp)
+    name: str = field(default_factory=str)
+    depends: list[str] = field(default_factory=list)
+    applied: datetime | None = None
+    doc: str | None = None
+    up: str | None = None
+    dn: str | None = None
 
-    @validator("name", pre=True, always=True)
-    def name_convert(cls, value):
+    def __post_init__(self):
         # replace non-word characters in the name with an underscore
-        return re.sub(r"[\W_]+", "_", value)
+        self.name = re.sub(r"[\W_]+", "_", self.name)
 
-    @validator("depends", pre=True, always=True)
-    def depends_default_empty_list(cls, value):
-        if isinstance(value, str):
-            return json.loads(value)
+        # ensure that depends is a list
+        if isinstance(self.depends, str):
+            self.depends = json.loads(self.depends)
         else:
-            return value or []
+            self.depends = list(self.depends) if self.depends else []
 
     def __repr__(self):
         return (
-            "Migration("
+            self.__class__.__name__
+            + "("
             + ", ".join(
                 f"{key}={getattr(self, key)!r}" for key in ["key", "depends", "applied"]
             )
@@ -80,11 +77,11 @@ class Migration(BaseModel):
         """
         The key uniquely identifies the migration. Format = "{app}:{id}_{name}"
         """
-        return f"{self.app}:{self.ts}_{self.name or ''}"
+        return f"{self.app}:{self.ts}_{self.name}"
 
     @property
     def filename(self):
-        return f'{self.ts}_{self.name or ""}.yaml'
+        return f"{self.ts}_{self.name}.yaml"
 
     @classmethod
     def load(cls, filepath):
@@ -109,7 +106,10 @@ class Migration(BaseModel):
         is True (default), also include depends migrations from other apps.
         """
         migration_filenames = glob(str(app_migrations_path(app) / "*.yaml"))
-        migrations = set(cls.load(filename) for filename in migration_filenames)
+        migrations = {
+            m.key: m
+            for m in set(cls.load(filename) for filename in migration_filenames)
+        }
         if include_depends is True:
             dependencies = set()
             for migration in migrations:
@@ -151,8 +151,6 @@ class Migration(BaseModel):
             doc=None,
             up=None,
             dn=None,
-            upsh=None,
-            dnsh=None,
         )
         return migration
 
@@ -181,21 +179,16 @@ class Migration(BaseModel):
         else:
             select = connection.execute
 
-        try:
-            rows = run_sync(select("select * from sqly_migrations"))
-            if database.dialect == Dialect.ASYNCPG:
-                records = rows
-            else:
-                records = []
-                fields = [d[0] for d in rows.description]
-                for row in rows:
-                    records.append(dict(zip(fields, row)))
+        rows = run_sync(select("select * from sqly_migrations"))
+        if database.dialect == Dialect.ASYNCPG:
+            records = rows
+        else:
+            records = []
+            fields = [d[0] for d in rows.description]
+            for row in rows:
+                records.append(dict(zip(fields, row)))
 
-            return {m.key: m for m in [cls(**record) for record in records]}
-
-        except Exception as exc:
-            print(exc)
-            return {}
+        return {m.key: m for m in set(cls(**record) for record in records)}
 
     @classmethod
     def migrate(cls, database, migration, connection=None, dryrun=False):
@@ -216,10 +209,8 @@ class Migration(BaseModel):
         connection = connection or run_sync(database.connect())
 
         db_migrations = cls.database_migrations(database, connection=connection)
-        migrations = db_migrations | {
-            m.key: m for m in cls.all_migrations(migration.app)
-        }
-        graph = cls.graph(migrations.values())
+        migrations = db_migrations | cls.all_migrations(migration.app)
+        graph = cls.graph(migrations)
 
         if migration.key not in db_migrations:
             # apply 'up' migrations for all ancestors and this migration
@@ -287,12 +278,6 @@ class Migration(BaseModel):
                 run_sync(connection.execute(sql))
             else:
                 run_sync(connection.executescript(sql))
-
-        sh = getattr(self, f"{direction}sh", None)
-        if sh:
-            # run the sh cmd relative to the directory in which the migration is defined
-            os.chdir(self.__class__.key_filepath(self.key))
-            os.system(sh)
 
         if direction == "up":
             query = self.insert_query(database)

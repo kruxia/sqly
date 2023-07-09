@@ -1,13 +1,13 @@
 import json
 import re
-
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 from .dialect import Dialect, OutputFormat
 from .lib import walk
 
 
-class SQL(BaseModel):
+@dataclass
+class SQL:
     """
     Create and render SQL queries with a given dialect. All queries are rendered
     according to that dialect.

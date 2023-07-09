@@ -1,10 +1,16 @@
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 from .dialect import Dialect
 from .lib import run_sync
 
 
-class Database(BaseModel):
+@dataclass
+class Database:
+    """
+    The Database class is primarily needed to provide a generalized database connection
+    to the Migration engine in order to run migrations.
+    """
+
     connection_string: str = ":memory:"
     dialect: Dialect = Dialect.SQLITE
 
