@@ -28,7 +28,7 @@ def migration(app, other_apps, name):
     OTHER_APPS
     """
     migration = Migration.create(app, *other_apps, name=name)
-    migration.save(exclude={"applied", "upsh", "dnsh"})
+    migration.save(exclude={"applied"})
     print(f"Created migration: {migration.key}")
     print("    depends:\n      -", "\n      - ".join(migration.depends or "[]"))
 
@@ -41,10 +41,7 @@ def migrations(apps, include_depends=False):
     List the Migrations in APPS
     """
     for app in apps:
-        app_migrations = {
-            m.key: m
-            for m in Migration.app_migrations(app, include_depends=include_depends)
-        }
+        app_migrations = Migration.app_migrations(app, include_depends=include_depends)
         graph = Migration.graph(Migration.app_migrations(app, include_depends=True))
         for key in nx.lexicographical_topological_sort(graph):
             if key in app_migrations:

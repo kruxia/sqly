@@ -1,5 +1,5 @@
 #!/bin/bash
 
-isort --check ${@:-.}
-black --check ${@:-.}
+isort -q --check ${@:-.}
+black -q --check ${@:-.}
 flake8 ${@:-.}

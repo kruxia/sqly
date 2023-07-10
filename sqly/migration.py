@@ -2,7 +2,7 @@ import json
 import os
 import re
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from glob import glob
 from importlib import import_module
@@ -72,6 +72,13 @@ class Migration:
     def __hash__(self):
         return uuid.uuid3(SQLY_UUID_NAMESPACE, self.key).int
 
+    def dict(self, exclude=None, exclude_none=False):
+        return {
+            key: val
+            for key, val in asdict(self).items()
+            if key not in (exclude or []) and (exclude_none is False or val is not None)
+        }
+
     @property
     def key(self):
         """
@@ -88,7 +95,7 @@ class Migration:
         with open(filepath) as f:
             data = yaml.safe_load(f.read())
 
-        return cls.parse_obj(data)
+        return cls(**data)
 
     @classmethod
     def key_load(cls, migration_key):
@@ -112,7 +119,7 @@ class Migration:
         }
         if include_depends is True:
             dependencies = set()
-            for migration in migrations:
+            for migration in migrations.values():
                 dependencies |= migration.depends_migrations()
 
             migrations |= dependencies
@@ -160,7 +167,7 @@ class Migration:
         Given an iterable of Migrations, create a dependency graph of Migrations by key.
         """
         graph = nx.DiGraph()
-        dag = {m.key: m.depends for m in migrations}
+        dag = {key: migrations[key].depends for key in migrations}
         for migration_key, migration_depends in dag.items():
             graph.add_node(migration_key)
             for depend in migration_depends:
@@ -179,14 +186,17 @@ class Migration:
         else:
             select = connection.execute
 
-        rows = run_sync(select("select * from sqly_migrations"))
-        if database.dialect == Dialect.ASYNCPG:
-            records = rows
-        else:
+        try:
+            rows = run_sync(select("select * from sqly_migrations"))
+            if database.dialect == Dialect.ASYNCPG:
+                records = rows
+            else:
+                records = []
+                fields = [d[0] for d in rows.description]
+                for row in rows:
+                    records.append(dict(zip(fields, row)))
+        except Exception:
             records = []
-            fields = [d[0] for d in rows.description]
-            for row in rows:
-                records.append(dict(zip(fields, row)))
 
         return {m.key: m for m in set(cls(**record) for record in records)}
 

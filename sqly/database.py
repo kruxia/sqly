@@ -14,6 +14,10 @@ class Database:
     connection_string: str = ":memory:"
     dialect: Dialect = Dialect.SQLITE
 
+    def __post_init__(self):
+        if isinstance(self.dialect, str):
+            self.dialect = Dialect(self.dialect)
+
     def connect(self):
         mod = self.dialect.load_adaptor()
         if self.dialect.adaptor == "sqlalchemy":
