@@ -1,3 +1,6 @@
+from typing import Any, Iterable, Optional
+
+
 class Q:
     """
     Convenience methods for building dynamic queries. Examples:
@@ -20,102 +23,36 @@ class Q:
     """
 
     @classmethod
-    def fields(cls, data, incl=None, excl=None, pre=None) -> str:
-        """
-        Render a comma-separated list of field names from the given data. Use: E.g., for
-        dynamically specifying SELECT or INSERT field lists.
-
-        * data = the data from which to use the field names.
-        * excl = a list / set of keys to exclude.
-        * pre = a tablename prefix to use with each field name.
-        """
-        return ", ".join(
-            f"{pre+'.' if pre else ''}{key}"
-            for key in cls.keys(data, incl=incl, excl=excl)
-        )
+    def keys(cls, fields: Iterable) -> list:
+        return [key for key in fields]
 
     @classmethod
-    def params(cls, data, incl=None, excl=None) -> str:
+    def fields(cls, fields: Iterable) -> str:
         """
-        Render a comma-separated list of parameters from the given data. Use: E.g.,
+        Render a comma-separated list of field names from the given fields. Use: E.g.,
+        for dynamically specifying SELECT or INSERT field lists.
+        """
+        return ", ".join(cls.keys(fields))
+
+    @classmethod
+    def params(cls, fields: Iterable) -> str:
+        """
+        Render a comma-separated list of parameters from the given fields. Use: E.g.,
         dynamically specifying INSERT parameter lists.
-
-        * data = the data from which to use the field names.
-        * excl = a list / set of keys to exclude.
         """
-        return ", ".join(f":{key}" for key in cls.keys(data, incl=incl, excl=excl))
+        return ", ".join(f":{key}" for key in cls.keys(fields))
 
     @classmethod
-    def assigns(cls, data, incl=None, excl=None, pre=None, op="=", join=",") -> str:
+    def assigns(cls, fields: Iterable) -> str:
         """
-        Render a comma-separated list of field to parameter assignments from the given
-        data. Use: E.g., for dynamically specifying UPDATE field lists.
-
-        * data = the data from which to use the field names.
-        * excl = a list / set of keys to exclude.
-        * pre = a tablename prefix to use with each field name.
-        * op = the operator to use in the assign (default `=`).
-        * join = the operator to join phrases by (default `,`)
+        Render a comma-separated list of assignments from the given fields. Use: E.g.,
+        for dynamically specifying UPDATE field lists.
         """
-        return f" {join} ".join(
-            f"{pre+'.' if pre else ''}{key} {op} :{key}"
-            for key in cls.keys(data, incl=incl, excl=excl)
-        )
+        return ", ".join(f"{key} = :{key}" for key in cls.keys(fields))
 
     @classmethod
-    def filters(cls, data, incl=None, excl=None, pre=None, op="=", join="AND") -> str:
-        return cls.assigns(data, incl=incl, excl=excl, pre=pre, op=op, join=join)
-
-    @classmethod
-    def filter(cls, key, val=None, op="="):
+    def filter(cls, key: str, *, op: Optional[str] = "=", val: Optional[Any] = None):
+        """
+        Render a filter from the given field key, optional operator, and optional value.
+        """
         return f"{key} {op} {val or ':' + key}"
-
-    @classmethod
-    def keys(cls, data, incl=None, excl=None) -> list:
-        return (
-            incl
-            if incl
-            else [key for key in data if key not in excl]
-            if excl
-            else list(data)
-        )
-
-    @classmethod
-    def select(cls, relation, fields=None, filters=None, orderby=None, limit=None):
-        fields = fields or ["*"]
-        filters = filters or []
-        query = [f"SELECT {cls.fields(fields)} FROM {relation}"]
-        if filters:
-            query.append(f"WHERE {cls.filters(filters)}")
-        if orderby:
-            query.append(f"ORDER BY {orderby}")
-        if limit:   
-            query.append(f"LIMIT {limit}")
-        return ' '.join(query)
-        
-    @classmethod
-    def insert(cls, relation, data):
-        query = [
-            f"INSERT INTO {relation}",
-            f"({cls.fields(data)})",
-            f"VALUES ({cls.params(data)})"
-        ]
-        return ' '.join(query)
-    
-    @classmethod
-    def update(cls, relation, data, filters):
-        query = [
-            f"UPDATE {relation} SET {cls.assigns(data)}",
-            f"WHERE {cls.filters(filters)}"
-        ]
-        return ' '.join(query)
-
-    @classmethod
-    def delete(cls, relation, filters):
-        query = [
-            f"DELETE FROM {relation}",
-            f"WHERE {cls.filters(filters)}",
-        ]
-        return ' '.join(query)
-    
-    
