@@ -33,7 +33,7 @@ class SQL:
         1. the rendered query string.
         2. depends on the output format:
             - positional output formats (QMARK, NUMBERED) return a tuple of values
-            - named output formats (COLON, PERCENT) return a dict
+            - named output formats (NAMED, PYFORMAT) return a dict
         """
         # ordered list of fields for positional outputs (closure for replace_parameter)
         fields = []
@@ -46,9 +46,9 @@ class SQL:
                 fields.append(field)
 
             # Return the field formatted for the output type
-            if self.dialect.output_format == OutputFormat.COLON:
+            if self.dialect.output_format == OutputFormat.NAMED:
                 return f":{field}"
-            elif self.dialect.output_format == OutputFormat.PERCENT:
+            elif self.dialect.output_format == OutputFormat.PYFORMAT:
                 return f"%({field})s"
             elif self.dialect.output_format == OutputFormat.QMARK:
                 return "?"
@@ -68,8 +68,8 @@ class SQL:
         else:
             raise ValueError(f"Query has unsupported type: {type(query)}")
 
-        # 2. Escape string parameters in the PERCENT output format
-        if self.dialect.output_format == OutputFormat.PERCENT:
+        # 2. Escape string parameters in the PYFORMAT output format
+        if self.dialect.output_format == OutputFormat.PYFORMAT:
             # any % must be intended as literal and must be doubled
             query_str = query_str.replace("%", "%%")
 
@@ -78,7 +78,7 @@ class SQL:
         query_str = re.sub(pattern, replace_parameter, query_str).strip()
 
         # 4. Un-escape remaining escaped colon params
-        if self.dialect.output_format == OutputFormat.COLON:
+        if self.dialect.output_format == OutputFormat.NAMED:
             # replace \:word with :word because the colon-escape is no longer needed.
             query_str = re.sub(r"\\:(\w+)\b", r":\1", query_str)
 

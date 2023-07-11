@@ -37,25 +37,27 @@ if __name__ == "__main__":
                 "click~=8.1.3",
                 "networkx~=3.1",
                 "PyYAML~=6.0",
+                # for now, require psycopg for migrations. Relax this requirement later.
+                "psycopg~=3.1.9",
             ],
-            # postgresql DB interfaces
-            "asyncpg": [
-                "asyncpg~=0.27.0",
-            ],
-            "psycopg2": [
-                "psycopg2-binary~=2.9.6",
-            ],
-            # all others can be done via ODBC
-            "pyodbc": [
-                "pyodbc~=4.0.39",
-            ],
-            # DB interface packages that wrap the DB-API.
-            "sqlalchemy": [
-                "sqlalchemy",
-            ],
-            "databases": [
-                "databases",
-            ],
+            # # postgresql DB interfaces
+            # "asyncpg": [
+            #     "asyncpg~=0.27.0",
+            # ],
+            # "psycopg": [
+            #     "psycopg[binary]~=3.1.9",
+            # ],
+            # # all others can be done via ODBC
+            # "pyodbc": [
+            #     "pyodbc~=4.0.39",
+            # ],
+            # # DB interface packages that wrap the DB-API.
+            # "sqlalchemy": [
+            #     "sqlalchemy",
+            # ],
+            # "databases": [
+            #     "databases",
+            # ],
         },
         **CONFIG
     )

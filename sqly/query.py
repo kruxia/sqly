@@ -10,12 +10,11 @@ class Q:
     'INSERT INTO tablename (name) VALUES (:name)'
     >>> f"SELECT ({Q.fields(d)}) FROM tablename WHERE {Q.filters(d)}"
     'SELECT (name) FROM tablename WHERE name = :name'
-    >>> d["id"] = 1
     >>> " ".join(
     ...     "UPDATE tablename SET",
-    ...     Q.assigns(d, excl=['id']),
+    ...     Q.assigns(['name']),
     ...     "WHERE",
-    ...     Q.filters(d, incl=['id'])
+    ...     Q.filter('id'),
     ... )
     'UPDATE tablename SET name = :name WHERE id = :id'
     >>> f"DELETE FROM tablename WHERE {Q.filters(d, incl=['name'])}"

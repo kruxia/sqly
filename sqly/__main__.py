@@ -4,7 +4,7 @@ import sys
 import click
 import networkx as nx
 
-from .database import Database
+from .dialect import Dialect
 from .migration import Migration
 
 
@@ -79,10 +79,12 @@ def migrate(migration_key, database_url=None, dialect=None, dryrun=False):
         print("--dialect or env $DATABASE_DIALECT must be set", file=sys.stderr)
         sys.exit(1)
 
-    database = Database(connection_string=database_url, dialect=dialect)
+    dialect = Dialect(dialect)
+    adaptor = dialect.load_adaptor()
+    connection = adaptor.connect(database_url)
 
     migration = Migration.key_load(migration_key)
-    Migration.migrate(database, migration, dryrun=dryrun)
+    Migration.migrate(connection, dialect, migration, dryrun=dryrun)
 
 
 if __name__ == "__main__":

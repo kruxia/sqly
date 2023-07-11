@@ -11,8 +11,7 @@ from pathlib import Path
 import networkx as nx
 import yaml
 
-from .dialect import Dialect
-from .lib import run_sync
+from .query import Q
 from .sql import SQL
 
 # enable repeatable UUID-as-hash for migration keys by using the repo as the namespace.
@@ -179,29 +178,22 @@ class Migration:
         return nx.transitive_reduction(graph)
 
     @classmethod
-    def database_migrations(cls, database, connection=None):
-        connection = connection or run_sync(database.connect())
-        if database.dialect == Dialect.ASYNCPG:
-            select = connection.fetch
-        else:
-            select = connection.execute
-
+    def database_migrations(cls, connection):
         try:
-            rows = run_sync(select("select * from sqly_migrations"))
-            if database.dialect == Dialect.ASYNCPG:
-                records = rows
-            else:
-                records = []
-                fields = [d[0] for d in rows.description]
-                for row in rows:
-                    records.append(dict(zip(fields, row)))
-        except Exception:
+            cursor = connection.execute("select * from sqly_migrations")
+            fields = [d[0] for d in cursor.description]
+            records = []
+            for row in cursor:
+                records.append(dict(zip(fields, row)))
+        except Exception as exc:
+            print(str(exc))
+            connection.rollback()
             records = []
 
         return {m.key: m for m in set(cls(**record) for record in records)}
 
     @classmethod
-    def migrate(cls, database, migration, connection=None, dryrun=False):
+    def migrate(cls, connection, dialect, migration, dryrun=False):
         """
         Migrate the database to this migration, either up or down, using the given
         (sqly) Database.
@@ -216,9 +208,7 @@ class Migration:
               from the last applied successor down to this migration.
         3. Apply the sequence of migrations (either up or down).
         """
-        connection = connection or run_sync(database.connect())
-
-        db_migrations = cls.database_migrations(database, connection=connection)
+        db_migrations = cls.database_migrations(connection)
         migrations = db_migrations | cls.all_migrations(migration.app)
         graph = cls.graph(migrations)
 
@@ -228,7 +218,7 @@ class Migration:
             for key in nx.lexicographical_topological_sort(subgraph):
                 if key not in db_migrations:
                     migrations[key].apply(
-                        database, direction="up", connection=connection, dryrun=dryrun
+                        connection, dialect, direction="up", dryrun=dryrun
                     )
         else:
             # apply 'dn' migrations for all descendants in reverse
@@ -236,7 +226,7 @@ class Migration:
             for key in reversed(list(nx.lexicographical_topological_sort(subgraph))):
                 if key in db_migrations:
                     migrations[key].apply(
-                        database, direction="dn", connection=connection, dryrun=dryrun
+                        connection, dialect, direction="dn", dryrun=dryrun
                     )
 
     def depends_migrations(self):
@@ -266,7 +256,7 @@ class Migration:
 
         return filepath, size
 
-    def apply(self, database, direction="up", connection=None, dryrun=False):
+    def apply(self, connection, dialect, direction="up", dryrun=False):
         """
         Apply the migration (direction = 'up' or 'dn') to connection database. The
         entire migration script is wrapped in a transaction.
@@ -277,47 +267,42 @@ class Migration:
             print("DRY RUN")
             return
 
-        connection = connection or run_sync(database.connect())
-        run_sync(connection.execute("begin;"))
+        connection.execute("begin;")
 
         sql = getattr(self, direction, None)
         if sql:
-            # (asyncpg does executescript via regular execute)
-            print("\n" + sql)
-            if database.dialect == database.dialect.ASYNCPG:
-                run_sync(connection.execute(sql))
-            else:
-                run_sync(connection.executescript(sql))
+            # print(sql)
+            connection.execute(sql)
 
         if direction == "up":
-            query = self.insert_query(database)
+            query = self.insert_query(dialect)
         else:
-            query = self.delete_query(database)
+            query = self.delete_query(dialect)
 
-        run_sync(connection.execute(*query))
-        run_sync(connection.execute("commit;"))
+        connection.execute(*query)
+        connection.execute("commit;")
         print("OK")
 
-    def insert_query(self, database):
+    def insert_query(self, dialect):
         """
         Insert this migration into the sqly_migrations table.
         """
         data = {k: v for k, v in self.dict(exclude_none=True).items()}
         if not isinstance(data.get("depends"), str):
             data["depends"] = json.dumps(data.get("depends") or [])
-        keys = [k for k in data.keys()]
-        params = [f":{k}" for k in keys]
         sql = f"""
-            INSERT INTO sqly_migrations ({','.join(keys)})
-            VALUES ({','.join(params)});
+            INSERT INTO sqly_migrations ({Q.fields(data)})
+            VALUES ({Q.params(data)});
             """
-        return SQL(dialect=database.dialect).render(sql, data)
+        return SQL(dialect=dialect).render(sql, data)
 
-    def delete_query(self, database):
-        sql = """
+    def delete_query(self, dialect):
+        """
+        Delete this migration from the sqly_migrations table.
+        """
+        sql = f"""
             DELETE FROM sqly_migrations
-            WHERE app=:app
-                and ts=:ts
-                and name=:name
+            WHERE 
+            {' AND '.join([Q.filter(key) for key in ['app', 'ts', 'name']])}
             """
-        return SQL(dialect=database.dialect).render(sql, self.dict())
+        return SQL(dialect=dialect).render(sql, self.dict())
