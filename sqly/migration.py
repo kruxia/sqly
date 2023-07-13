@@ -11,6 +11,7 @@ from pathlib import Path
 import networkx as nx
 import yaml
 
+from . import queries
 from .query import Q
 from .sql import SQL
 
@@ -47,13 +48,16 @@ class Migration:
 
     def __post_init__(self):
         # replace non-word characters in the name with an underscore
-        self.name = re.sub(r"[\W_]+", "_", self.name)
+        self.name = re.sub(r"[\W_]+", "_", self.name or "")
 
         # ensure that depends is a list
-        if isinstance(self.depends, str):
-            self.depends = json.loads(self.depends)
+        if self.depends:
+            if isinstance(self.depends, str):
+                self.depends = json.loads(self.depends)
+            else:
+                self.depends = list(self.depends)
         else:
-            self.depends = list(self.depends) if self.depends else []
+            self.depends = []
 
     def __repr__(self):
         return (
@@ -117,7 +121,7 @@ class Migration:
             for m in set(cls.load(filename) for filename in migration_filenames)
         }
         if include_depends is True:
-            dependencies = set()
+            dependencies = {}
             for migration in migrations.values():
                 dependencies |= migration.depends_migrations()
 
@@ -233,10 +237,12 @@ class Migration:
         """
         All migrations that this migration depends on, recursively.
         """
-        dependencies = set()
+        dependencies = {}
+        print(self.key, dependencies)
         for depend in self.depends:
-            depend_migration = self.load(self.key_filepath(depend))
-            dependencies |= {depend_migration} | depend_migration.depends_migrations()
+            print(depend)
+            migration = self.key_load(depend)
+            dependencies |= {depend: migration} | migration.depends_migrations()
         return dependencies
 
     def ancestors(self, graph):
@@ -290,19 +296,14 @@ class Migration:
         data = {k: v for k, v in self.dict(exclude_none=True).items()}
         if not isinstance(data.get("depends"), str):
             data["depends"] = json.dumps(data.get("depends") or [])
-        sql = f"""
-            INSERT INTO sqly_migrations ({Q.fields(data)})
-            VALUES ({Q.params(data)});
-            """
+        sql = queries.INSERT("sqly_migrations", data)
         return SQL(dialect=dialect).render(sql, data)
 
     def delete_query(self, dialect):
         """
         Delete this migration from the sqly_migrations table.
         """
-        sql = f"""
-            DELETE FROM sqly_migrations
-            WHERE 
-            {' AND '.join([Q.filter(key) for key in ['app', 'ts', 'name']])}
-            """
+        sql = queries.DELETE(
+            "sqly_migrations", [Q.filter(key) for key in ["app", "ts", "name"]]
+        )
         return SQL(dialect=dialect).render(sql, self.dict())
