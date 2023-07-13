@@ -1,6 +1,3 @@
-import asyncio
-
-
 def walk(iterator):
     """
     Walk a nested iterator and yield items in a single stream
@@ -12,13 +9,3 @@ def walk(iterator):
                 yield i
         else:
             yield item
-
-
-def run_sync(result):
-    """
-    If result is a coroutine, evaluate it
-    """
-    if asyncio.iscoroutine(result):
-        return asyncio.run(result)
-    else:
-        return result

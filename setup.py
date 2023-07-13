@@ -32,6 +32,12 @@ if __name__ == "__main__":
                 "flake8~=6.0.0",
                 "pytest~=7.3.1",
                 "pytest-cov~=4.0.0",
+                # all the supported adaptors have to be installed to test
+                "sqlalchemy",
+                "databases",
+                "psycopg[binary]~=3.1.9",
+                "asyncpg~=0.27.0",
+                "psycopg~=3.1.9",
             ],
             "migration": [
                 "click~=8.1.3",
@@ -41,23 +47,23 @@ if __name__ == "__main__":
                 "psycopg~=3.1.9",
             ],
             # # postgresql DB interfaces
-            # "asyncpg": [
-            #     "asyncpg~=0.27.0",
-            # ],
-            # "psycopg": [
-            #     "psycopg[binary]~=3.1.9",
-            # ],
+            "asyncpg": [
+                "asyncpg~=0.27.0",
+            ],
+            "psycopg": [
+                "psycopg[binary]~=3.1.9",
+            ],
             # # all others can be done via ODBC
             # "pyodbc": [
             #     "pyodbc~=4.0.39",
             # ],
             # # DB interface packages that wrap the DB-API.
-            # "sqlalchemy": [
-            #     "sqlalchemy",
-            # ],
-            # "databases": [
-            #     "databases",
-            # ],
+            "sqlalchemy": [
+                "sqlalchemy",
+            ],
+            "databases": [
+                "databases",
+            ],
         },
         **CONFIG
     )

@@ -3,3 +3,4 @@ sqly.egg-info/
 .envrc
 sqly/__pycache__/
 *.pyc
+.coverage

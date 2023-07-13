@@ -5,7 +5,7 @@ from importlib import import_module
 class OutputFormat(Enum):
     # -- positional --
     QMARK = "?"
-    FORMAT = "%s"
+    # FORMAT = "%s"
     NUMBERED = "$i"
 
     # -- keyed --

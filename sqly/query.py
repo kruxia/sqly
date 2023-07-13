@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Optional
+from typing import Iterable, Optional
 
 
 class Q:
@@ -23,7 +23,7 @@ class Q:
 
     @classmethod
     def keys(cls, fields: Iterable) -> list:
-        return [key for key in fields]
+        return list(fields)
 
     @classmethod
     def fields(cls, fields: Iterable) -> str:
@@ -31,7 +31,7 @@ class Q:
         Render a comma-separated list of field names from the given fields. Use: E.g.,
         for dynamically specifying SELECT or INSERT field lists.
         """
-        return ", ".join(cls.keys(fields))
+        return ", ".join(fields)
 
     @classmethod
     def params(cls, fields: Iterable) -> str:
@@ -50,8 +50,8 @@ class Q:
         return ", ".join(f"{key} = :{key}" for key in cls.keys(fields))
 
     @classmethod
-    def filter(cls, key: str, *, op: Optional[str] = "=", val: Optional[Any] = None):
+    def filter(cls, key: str, *, op: Optional[str] = "="):
         """
         Render a filter from the given field key, optional operator, and optional value.
         """
-        return f"{key} {op} {val or ':' + key}"
+        return f"{key} {op} :{key}"

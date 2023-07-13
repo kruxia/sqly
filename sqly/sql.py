@@ -16,7 +16,7 @@ class SQL:
     dialect: Dialect
 
     def __post_init__(self):
-        if isinstance(self.dialect, str):
+        if not isinstance(self.dialect, Dialect):
             self.dialect = Dialect(self.dialect)
 
     def render(self, query, data=None):
@@ -61,7 +61,7 @@ class SQL:
                 )
 
         # 1. Convert query to a string
-        if isinstance(query, str) or hasattr(query, "__str__"):
+        if isinstance(query, str):
             query_str = str(query)
         elif hasattr(query, "__iter__"):
             query_str = "\n".join(str(q) for q in walk(query))
