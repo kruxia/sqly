@@ -11,9 +11,8 @@ def get_query_params(sql, q, data=None):
         params = result[1:]
     else:
         query, params = result
-    
-    return query, params
 
+    return query, params
 
 
 @pytest.mark.parametrize("dialect_name", fixtures.valid_dialect_names)
@@ -50,7 +49,7 @@ def test_sql_render(dialect_name):
 @pytest.mark.parametrize("dialect_name", fixtures.valid_dialect_names)
 def test_sql_render_nested_query(dialect_name):
     sql = SQL(dialect=dialect_name)
-    q = ['select', ['*', ['from', 'tablename']]]
+    q = ["select", ["*", ["from", "tablename"]]]
     query, params = get_query_params(sql, q)
     assert isinstance(query, str)
     assert not params
