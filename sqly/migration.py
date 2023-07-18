@@ -24,7 +24,7 @@ def app_migrations_path(app):
     For a given app name, get the path to its migrations directory.
     """
     mod = import_module(app)
-    mod_filepath = Path(mod.__file__).parent
+    mod_filepath = Path(next(iter(mod.__path__)))
     return mod_filepath / "migrations"
 
 
@@ -238,9 +238,7 @@ class Migration:
         All migrations that this migration depends on, recursively.
         """
         dependencies = {}
-        print(self.key, dependencies)
         for depend in self.depends:
-            print(depend)
             migration = self.key_load(depend)
             dependencies |= {depend: migration} | migration.depends_migrations()
         return dependencies
