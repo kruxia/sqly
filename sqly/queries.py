@@ -7,12 +7,14 @@ constructing SQL strings representing queries of the same names - SELECT, etc. a
 capitalized in SQL. It also helps them to stand out in code, making it a little easier
 to audit where in the codebase queries are being constructed.
 """
-from typing import Iterable, Optional
+from typing import Iterable
 
 from sqly.query import Q
 
 
-def SELECT(relation: str, fields=None, filters=None, orderby=None, limit=None, offset=None) -> str:
+def SELECT(
+    relation: str, fields=None, filters=None, orderby=None, limit=None, offset=None
+) -> str:
     """
     SELECT fields
         FROM relation
