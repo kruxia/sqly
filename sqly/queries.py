@@ -12,13 +12,14 @@ from typing import Iterable, Optional
 from sqly.query import Q
 
 
-def SELECT(relation: str, fields=None, filters=None, orderby=None, limit=None) -> str:
+def SELECT(relation: str, fields=None, filters=None, orderby=None, limit=None, offset=None) -> str:
     """
     SELECT fields
         FROM relation
         [WHERE filters]
         [ORDER BY orderby]
-        [LIMIT limit].
+        [LIMIT limit]
+        [OFFSET offset].
     """
     fields = fields or ["*"]
     query = [
@@ -31,7 +32,9 @@ def SELECT(relation: str, fields=None, filters=None, orderby=None, limit=None) -
         query.append(f"ORDER BY {orderby}")
     if limit:
         query.append(f"LIMIT {limit}")
-    return " ".join(query)
+    if offset:
+        query.append(f"OFFSET {offset}")
+    return query
 
 
 def INSERT(relation: str, data: Iterable) -> str:
