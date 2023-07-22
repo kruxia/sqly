@@ -75,18 +75,3 @@ def DELETE(relation: str, filters: Iterable[str]) -> str:
         f"WHERE {' AND '.join(filters)}",
     ]
     return " ".join(query)
-
-
-def DELETE_RETURNING(
-    relation: str, filters: Iterable[str], fields: Optional[Iterable] = None
-) -> str:
-    """
-    DELETE ...
-    RETURNING fields
-    """
-    returning = Q.fields(fields or ["*"])
-    query = [
-        DELETE(relation, filters),
-        f" RETURNING {returning}",
-    ]
-    return " ".join(query)
