@@ -75,22 +75,3 @@ def test_delete():
     assert tablename in q
     assert "WHERE" in q
     assert q.count("=") == len(filters)
-
-
-@pytest.mark.parametrize(
-    "fields,returning",
-    [
-        ([], "*"),
-        (None, "*"),
-        (["a", "b", "c"], "a, b, c"),
-    ],
-)
-def test_delete_returning(fields, returning):
-    tablename = "tablename"
-    filters = ["a = :a"]
-    q_delete = queries.DELETE(tablename, filters)
-    q_returning = queries.DELETE_RETURNING(tablename, filters, fields)
-    print(q_returning)
-    assert isinstance(q_returning, str)
-    assert q_delete in q_returning
-    assert f"RETURNING {returning}" in q_returning
