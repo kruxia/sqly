@@ -33,12 +33,12 @@ def test_select(fields, filters, orderby, limit):
     }
     q = queries.SELECT(tablename, **kwargs)
     print(q)
-    assert isinstance(q, str)
+    assert isinstance(q, list)
     assert f"FROM {tablename}" in q
     # The presence of certain clauses is based on the inclusion of those clauses
     assert ("SELECT *" not in q) is bool(fields)
-    assert ("ORDER BY" in q) is bool(orderby)
-    assert ("LIMIT" in q) is bool(limit)
+    assert (f"ORDER BY {orderby}" in q) is bool(orderby)
+    assert (f"LIMIT {limit}" in q) is bool(limit)
 
 
 @pytest.mark.parametrize("fields", fixtures.fields)
