@@ -14,6 +14,8 @@ class Database:
         Initialize the Database with a SQL instance for its Dialect so that it can
         `.render()` queries for that dialect.
         """
+        if isinstance(self.dialect, str):
+            self.dialect = Dialect(self.dialect)
         self.sql = SQL(dialect=self.dialect)
 
     def execute(
@@ -43,6 +45,6 @@ class Database:
         Execute the given query on the connection, and yield result records.
         """
         cursor = self.execute(connection, sql_query, data)
-        fields = [d.name for d in cursor.description]
+        fields = [d[0] for d in cursor.description]
         for row in cursor:
             yield Constructor(zip(fields, row))
