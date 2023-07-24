@@ -54,7 +54,7 @@ class SQL:
                 return "?"
             elif self.dialect.output_format == OutputFormat.NUMBERED:
                 return f"${len(fields)}"
-            else:
+            else:  # pragma: no cover (UNREACHABLE)
                 raise ValueError(
                     "Dialect %r output_format %r not supported"
                     % (self.dialect, self.dialect.output_format)

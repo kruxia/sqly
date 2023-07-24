@@ -53,3 +53,18 @@ def test_sql_render_nested_query(dialect_name):
     query, params = get_query_params(sql, q)
     assert isinstance(query, str)
     assert not params
+
+
+@pytest.mark.parametrize("dialect_name", fixtures.valid_dialect_names)
+def test_sql_render_invalid_query_type(dialect_name):
+    """
+    A query that is not a string or an iterator raises a ValueError
+    """
+
+    class InvalidQuery:
+        ...
+
+    sql = SQL(dialect=dialect_name)
+    query = InvalidQuery()
+    with pytest.raises(ValueError):
+        sql.render(query)

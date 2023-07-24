@@ -5,21 +5,22 @@ from tests import fixtures
 
 
 @pytest.mark.parametrize(
-    "fields,filters,orderby,limit",
+    "fields,filters,orderby,limit,offset",
     [
-        (None, None, None, None),
-        (["a", "b"], None, None, None),
-        (None, ["a = :a", "b < :b"], None, None),
-        (None, None, "a", None),
-        (None, None, None, 5),
-        ([], [], [], []),
-        (["a", "b"], [], [], []),
-        ([], ["a = :a", "b < :b"], [], []),
-        ([], [], "a", []),
-        ([], [], [], 5),
+        (None, None, None, None, None),
+        (["a", "b"], None, None, None, None),
+        (None, ["a = :a", "b < :b"], None, None, None),
+        (None, None, "a", None, None),
+        (None, None, None, 5, None),
+        ([], [], [], [], None),
+        (["a", "b"], [], [], [], None),
+        ([], ["a = :a", "b < :b"], [], [], None),
+        ([], [], "a", [], None),
+        ([], [], [], 5, None),
+        ([], [], [], None, 2),
     ],
 )
-def test_select(fields, filters, orderby, limit):
+def test_select(fields, filters, orderby, limit, offset):
     tablename = "tablename"
     kwargs = {
         name: value
@@ -28,6 +29,7 @@ def test_select(fields, filters, orderby, limit):
             "filters": filters,
             "orderby": orderby,
             "limit": limit,
+            "offset": offset,
         }.items()
         if value
     }
@@ -39,6 +41,7 @@ def test_select(fields, filters, orderby, limit):
     assert ("SELECT *" not in q) is bool(fields)
     assert (f"ORDER BY {orderby}" in q) is bool(orderby)
     assert (f"LIMIT {limit}" in q) is bool(limit)
+    assert (f"OFFSET {offset}" in q) is bool(offset)
 
 
 @pytest.mark.parametrize("fields", fixtures.fields)
