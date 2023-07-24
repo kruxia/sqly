@@ -162,6 +162,42 @@ def test_main_migrate(cli_runner, dialect_name, database_url):
         ("sqlite", f"file://{str(TESTAPP_MIGRATIONS_PATH.parent / 'test.db')}"),
     ],
 )
+def test_main_migrate_dryrun(cli_runner, dialect_name, database_url):
+    """
+    The same migration run twice as a dryrun will have the same output and exit 0,
+    because it wasn't applied.
+    """
+    try:
+        m_path = Path(next(iter(glob(str(SQLY_MIGRATIONS_PATH / "*.yaml")))))
+        m_key = f"sqly:{m_path.stem}"
+
+        # migrate up
+        result1 = cli_runner.invoke(
+            # -r = --dryrun
+            __main__.migrate,
+            [m_key, "-r", "-u", database_url, "-d", dialect_name],
+        )
+        assert result1.exit_code == 0
+
+        result2 = cli_runner.invoke(
+            __main__.migrate,
+            [m_key, "--dryrun", "-u", database_url, "-d", dialect_name],
+        )
+        assert result2.exit_code == 0
+
+        assert result1.output == result2.output
+
+    finally:
+        # clean up test.db
+        os.remove(TESTAPP_MIGRATIONS_PATH.parent / "test.db")
+
+
+@pytest.mark.parametrize(
+    "dialect_name,database_url",
+    [
+        ("sqlite", f"file://{str(TESTAPP_MIGRATIONS_PATH.parent / 'test.db')}"),
+    ],
+)
 def test_main_migrate_invalid(cli_runner, dialect_name, database_url):
     try:
         # create a testapp migration that creates a table

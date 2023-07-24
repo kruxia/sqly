@@ -273,10 +273,8 @@ class Migration:
 
         connection.execute("begin;")
 
-        sql = getattr(self, direction, None)
-        if sql:
-            # print(sql)
-            connection.execute(sql)
+        sql = getattr(self, direction)
+        connection.execute(sql)
 
         if direction == "up":
             query = self.insert_query(dialect)
@@ -292,8 +290,7 @@ class Migration:
         Insert this migration into the sqly_migrations table.
         """
         data = {k: v for k, v in self.dict(exclude_none=True).items()}
-        if not isinstance(data.get("depends"), str):
-            data["depends"] = json.dumps(data.get("depends") or [])
+        data["depends"] = json.dumps(data.get("depends") or [])
         sql = queries.INSERT("sqly_migrations", data)
         return SQL(dialect=dialect).render(sql, data)
 
