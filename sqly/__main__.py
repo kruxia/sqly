@@ -9,7 +9,7 @@ from .migration import Migration
 
 
 @click.group()
-def main():
+def main():  # pragma: no cover
     pass
 
 
@@ -35,7 +35,7 @@ def migration(app, other_apps, name):
 
 @main.command()
 @click.argument("apps", nargs=-1)
-@click.option("-i", "--include-depends", is_flag=True, help="Show dependencies")
+@click.option("-i", "--include-depends", is_flag=True, help="Include dependencies")
 def migrations(apps, include_depends=False):
     """
     List the Migrations in APPS
@@ -48,7 +48,7 @@ def migrations(apps, include_depends=False):
                 print(key)
                 migration = app_migrations[key]
                 if migration.depends and include_depends:
-                    print("\t=> " + ", ".join(migration.depends))
+                    print("\t=> " + "\n\t=> ".join(migration.depends))
 
 
 @main.command()
@@ -87,5 +87,5 @@ def migrate(migration_key, database_url=None, dialect=None, dryrun=False):
     Migration.migrate(connection, dialect, migration, dryrun=dryrun)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
