@@ -138,16 +138,31 @@ def test_migration_delete_query(dialect_name):
         assert f"{key} = " in query
 
 
-@pytest.mark.parametrize(
-    "dialect_name,database_url",
-    [
-        ("sqlite", ":memory:"),
-    ],
-)
+@pytest.mark.parametrize("dialect_name,database_url", fixtures.test_databases)
 def test_migration_migrate(dialect_name, database_url):
-    dialect = Dialect(dialect_name)
-    adaptor = dialect.load_adaptor()
-    connection = adaptor.connect(database_url)
-    assert not migration.Migration.database_migrations(connection)
-    m = migration.Migration.key_load(EXISTING_MIGRATION_KEYS[0])
-    migration.Migration.migrate(connection, dialect, m)
+    try:
+        dialect = Dialect(dialect_name)
+        adaptor = dialect.load_adaptor()
+        connection = adaptor.connect(database_url)
+        assert not migration.Migration.database_migrations(connection)
+        m = migration.Migration.key_load(EXISTING_MIGRATION_KEYS[0])
+        migration.Migration.migrate(connection, dialect, m)
+
+    finally:
+        # clean up tables
+        try:
+            connection.execute("DROP TABLE widgets")
+            connection.commit()
+        except Exception:
+            ...
+
+        try:
+            connection.execute("DROP TABLE sqly_migrations")
+            connection.commit()
+        except Exception:
+            ...
+
+        # clean up database file if any
+        db_file = database_url.split("file://")[-1] if "file://" in database_url else ""
+        if os.path.exists(db_file):
+            os.remove(db_file)

@@ -1,0 +1,30 @@
+version: "3.7"
+services:
+  # testapp:
+  #   depends_on:
+  #     - postgres
+  #   build:
+  #     context: ./
+  #     dockerfile: ./Dockerfile
+  #     target: test
+  #   volumes:
+  #     - .:/opt/sqly
+  #   environment:
+  #     DEBUG: "True"
+  #     POSTGRES_URL: postgresql://postgres:password@postgres:5432/testapp
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: testapp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_PORT: 5432
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - .:/code
+
+volumes:
+  pgdata:

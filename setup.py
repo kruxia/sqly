@@ -34,23 +34,15 @@ if __name__ == "__main__":
                 "pytest-click~=1.1.0",
                 "pytest-cov~=4.0.0",
                 # all the supported adaptors have to be installed to test
-                "sqlalchemy",
-                "databases",
                 "psycopg[binary]~=3.1.9",
-                "asyncpg~=0.27.0",
-                "psycopg~=3.1.9",
+                # "pyodbc~=4.0.39",
             ],
             "migration": [
                 "click~=8.1.3",
                 "networkx~=3.1",
                 "PyYAML~=6.0",
-                # for now, require psycopg for migrations. Relax this requirement later.
-                "psycopg~=3.1.9",
             ],
-            # # postgresql DB interfaces
-            "asyncpg": [
-                "asyncpg~=0.27.0",
-            ],
+            # postgresql DB interfaces
             "psycopg": [
                 "psycopg[binary]~=3.1.9",
             ],
@@ -58,13 +50,6 @@ if __name__ == "__main__":
             # "pyodbc": [
             #     "pyodbc~=4.0.39",
             # ],
-            # # DB interface packages that wrap the DB-API.
-            "sqlalchemy": [
-                "sqlalchemy",
-            ],
-            "databases": [
-                "databases",
-            ],
         },
         **CONFIG
     )

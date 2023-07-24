@@ -1,3 +1,7 @@
+from pathlib import Path
+
+PATH = Path(__file__).absolute().parent
+
 fields = [
     # list
     (["a", "b", "c"]),
@@ -18,3 +22,10 @@ valid_dialect_names = [
 ]
 
 invalid_dialect_names = [None, "", "foo"]
+
+test_databases = [
+    # dialect, url
+    ("sqlite", ":memory:"),
+    ("sqlite", f"file://{PATH}/test.db"),
+    ("psycopg", "postgresql://postgres:password@localhost:5432/testapp"),
+]

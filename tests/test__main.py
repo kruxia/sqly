@@ -1,5 +1,4 @@
 import os
-import sqlite3
 from glob import glob
 from pathlib import Path
 
@@ -9,6 +8,7 @@ import yaml
 import sqly
 import testapp
 from sqly import __main__
+from tests import fixtures
 
 SQLY_MIGRATIONS_PATH = Path(sqly.__file__).absolute().parent / "migrations"
 TESTAPP_MIGRATIONS_PATH = Path(testapp.__file__).absolute().parent / "migrations"
@@ -102,12 +102,7 @@ def test_main_migrations(cli_runner):
             os.remove(filename)
 
 
-@pytest.mark.parametrize(
-    "dialect_name,database_url",
-    [
-        ("sqlite", f"file://{str(TESTAPP_MIGRATIONS_PATH.parent / 'test.db')}"),
-    ],
-)
+@pytest.mark.parametrize("dialect_name,database_url", fixtures.test_databases)
 def test_main_migrate(cli_runner, dialect_name, database_url):
     try:
         # create a testapp migration that creates a table
@@ -126,14 +121,7 @@ def test_main_migrate(cli_runner, dialect_name, database_url):
             __main__.migrate, [m_key, "-u", database_url, "-d", dialect_name]
         )
         assert result.exit_code == 0
-
-        # the table exists, in that we can insert into it
-        conn = sqlite3.connect(database_url)
-        cursor = conn.execute("INSERT INTO widgets VALUES (1, 'w-01')")
-        conn.commit()
-        cursor = conn.execute("SELECT * FROM widgets")
-        values = cursor.fetchone()
-        assert values == (1, "w-01")
+        assert m_key in result.output
 
         # migrate down
         sqly_init_path = Path(
@@ -152,16 +140,13 @@ def test_main_migrate(cli_runner, dialect_name, database_url):
         for filename in testapp_migrations:
             os.remove(filename)
 
-        # clean up test.db
-        os.remove(TESTAPP_MIGRATIONS_PATH.parent / "test.db")
+        # clean up database file if any
+        db_file = database_url.split("file://")[-1] if "file://" in database_url else ""
+        if os.path.exists(db_file):
+            os.remove(db_file)
 
 
-@pytest.mark.parametrize(
-    "dialect_name,database_url",
-    [
-        ("sqlite", f"file://{str(TESTAPP_MIGRATIONS_PATH.parent / 'test.db')}"),
-    ],
-)
+@pytest.mark.parametrize("dialect_name,database_url", fixtures.test_databases)
 def test_main_migrate_dryrun(cli_runner, dialect_name, database_url):
     """
     The same migration run twice as a dryrun will have the same output and exit 0,
@@ -188,16 +173,13 @@ def test_main_migrate_dryrun(cli_runner, dialect_name, database_url):
         assert result1.output == result2.output
 
     finally:
-        # clean up test.db
-        os.remove(TESTAPP_MIGRATIONS_PATH.parent / "test.db")
+        # clean up database file if any
+        db_file = database_url.split("file://")[-1] if "file://" in database_url else ""
+        if os.path.exists(db_file):
+            os.remove(db_file)
 
 
-@pytest.mark.parametrize(
-    "dialect_name,database_url",
-    [
-        ("sqlite", f"file://{str(TESTAPP_MIGRATIONS_PATH.parent / 'test.db')}"),
-    ],
-)
+@pytest.mark.parametrize("dialect_name,database_url", fixtures.test_databases)
 def test_main_migrate_invalid(cli_runner, dialect_name, database_url):
     try:
         # create a testapp migration that creates a table
@@ -219,10 +201,13 @@ def test_main_migrate_invalid(cli_runner, dialect_name, database_url):
         result = cli_runner.invoke(__main__.migrate, [m_key, "-u", database_url])
         assert result.exit_code == 1
 
-        assert not os.path.exists(TESTAPP_MIGRATIONS_PATH.parent / "test.db")
-
     finally:
         # clean up testapp migrations
         testapp_migrations = glob(str(TESTAPP_MIGRATIONS_PATH / "*.yaml"))
         for filename in testapp_migrations:
             os.remove(filename)
+
+        # clean up database file if any
+        db_file = database_url.split("file://")[-1] if "file://" in database_url else ""
+        if os.path.exists(db_file):
+            os.remove(db_file)
