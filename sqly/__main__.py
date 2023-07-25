@@ -1,3 +1,4 @@
+# import json
 import os
 import sys
 
@@ -81,6 +82,10 @@ def migrate(migration_key, database_url=None, dialect=None, dryrun=False):
 
     dialect = Dialect(dialect)
     adaptor = dialect.load_adaptor()
+    # if dialect == Dialect.MYSQL:
+    #     conn_info = json.loads(database_url)
+    #     connection = adaptor.connect(**conn_info)
+    # else:
     connection = adaptor.connect(database_url)
 
     migration = Migration.key_load(migration_key)

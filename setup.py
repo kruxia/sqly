@@ -35,7 +35,11 @@ if __name__ == "__main__":
                 "pytest-cov~=4.0.0",
                 # all the supported adaptors have to be installed to test
                 "psycopg[binary]~=3.1.9",
-                # "pyodbc~=4.0.39",
+                # "mysqlclient~=2.2.0",
+                # # TODO: Remove these???
+                # "SQLAlchemy~=1.4.49",
+                # "asyncpg~=0.28.0",
+                # "databases~=0.7.0",
             ],
             "migration": [
                 "click~=8.1.3",
@@ -46,6 +50,9 @@ if __name__ == "__main__":
             "psycopg": [
                 "psycopg[binary]~=3.1.9",
             ],
+            # "mysql": [
+            #     "mysqlclient~=2.2.0",
+            # ]
             # # all others can be done via ODBC
             # "pyodbc": [
             #     "pyodbc~=4.0.39",

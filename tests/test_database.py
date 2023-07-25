@@ -1,3 +1,4 @@
+# import json
 import os
 
 import pytest
@@ -26,6 +27,10 @@ def test_execute_query_ok(dialect_name, database_url):
         # connect to the database
         database = Database(dialect=dialect_name)
         adaptor = database.dialect.load_adaptor()
+        # if database.dialect == Dialect.MYSQL:
+        #     conn_info = json.loads(database_url)
+        #     connection = adaptor.connect(**conn_info)
+        # else:
         connection = adaptor.connect(database_url)
 
         # execute a query that should have visible results
@@ -78,6 +83,10 @@ def test_execute_invalid_rollback(dialect_name, database_url):
         # connect to the database
         database = Database(dialect=dialect_name)
         adaptor = database.dialect.load_adaptor()
+        # if database.dialect == Dialect.MYSQL:
+        #     conn_info = json.loads(database_url)
+        #     connection = adaptor.connect(**conn_info)
+        # else:
         connection = adaptor.connect(database_url)
 
         # execute an invalid query

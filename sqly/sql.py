@@ -54,11 +54,8 @@ class SQL:
                 return "?"
             elif self.dialect.output_format == OutputFormat.NUMBERED:
                 return f"${len(fields)}"
-            else:  # pragma: no cover (UNREACHABLE)
-                raise ValueError(
-                    "Dialect %r output_format %r not supported"
-                    % (self.dialect, self.dialect.output_format)
-                )
+            else:  # self.dialect.output_format == OutputFormat.FORMAT:
+                return "%s"
 
         # 1. Convert query to a string
         if isinstance(query, str):
@@ -97,9 +94,9 @@ class SQL:
             }
 
         # 6. Return a tuple formatted for this Dialect
-        if self.dialect == Dialect.ASYNCPG:
-            # asyncpg expects the parameters in a tuple following the query string.
-            return tuple([query_str] + parameter_values)
-        else:
-            # other dialects expect the parameters in the second tuple item.
-            return (query_str, parameter_values)
+        # if self.dialect == Dialect.ASYNCPG:
+        # asyncpg expects the parameters in a tuple following the query string.
+        # return tuple([query_str] + parameter_values)
+        # else:
+        # other dialects expect the parameters in the second tuple item.
+        return (query_str, parameter_values)

@@ -5,7 +5,7 @@ from importlib import import_module
 class OutputFormat(Enum):
     # -- positional --
     QMARK = "?"
-    # FORMAT = "%s"
+    FORMAT = "%s"
     NUMBERED = "$i"
 
     # -- keyed --
@@ -24,41 +24,44 @@ class OutputFormat(Enum):
 class Dialect(Enum):
     # the value of each Dialect represents the syntax that it uses for query parameters
     PSYCOPG = "psycopg"
-    # --
-    ASYNCPG = "asyncpg"
-    DATABASES = "databases"
-    SQLALCHEMY = "sqlalchemy"
     SQLITE = "sqlite"
     # --
-    # PSYCOPG2 = "psycopg2"
+    # MYSQL = "mysql"
     # PYODBC = "pyodbc"
+    # # --
+    # ASYNCPG = "asyncpg"
+    # DATABASES = "databases"
+    # SQLALCHEMY = "sqlalchemy"
+    # PSYCOPG2 = "psycopg2"
 
     @property
     def output_format(self):
         return {
             self.PSYCOPG: OutputFormat.PYFORMAT,
-            # --
-            self.ASYNCPG: OutputFormat.NUMBERED,
-            self.DATABASES: OutputFormat.NAMED,
-            self.SQLALCHEMY: OutputFormat.PYFORMAT,
             self.SQLITE: OutputFormat.QMARK,
             # --
-            # self.PSYCOPG2: OutputFormat.PYFORMAT,
+            # self.MYSQL: OutputFormat.FORMAT,
             # self.PYODBC: OutputFormat.QMARK,
+            # # --
+            # self.ASYNCPG: OutputFormat.NUMBERED,
+            # self.DATABASES: OutputFormat.NAMED,
+            # self.SQLALCHEMY: OutputFormat.PYFORMAT,
+            # self.PSYCOPG2: OutputFormat.PYFORMAT,
         }[self]
 
     @property
     def adaptor(self):
         return {
             self.PSYCOPG: "psycopg",
-            # --
-            self.ASYNCPG: "asyncpg",
-            self.DATABASES: "databases",
-            self.SQLALCHEMY: "sqlalchemy",
             self.SQLITE: "sqlite3",
             # --
-            # self.PSYCOPG2: "psycopg2",
+            # self.MYSQL: "MySQLdb",
             # self.PYODBC: "pyodbc",
+            # # --
+            # self.ASYNCPG: "asyncpg",
+            # self.DATABASES: "databases",
+            # self.SQLALCHEMY: "sqlalchemy",
+            # self.PSYCOPG2: "psycopg2",
         }[self]
 
     def load_adaptor(self):
