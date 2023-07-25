@@ -10,8 +10,7 @@ Yet there are a couple of things that are nice to have help with in constructing
 
 SQLY:
 
-* One class, `SQL`, with one field, `query`, and one method, `.render`, which takes one optional argument, `dialect`. 
 * Dynamic value replacement, rendered in one of the supported dialects: postgres (`$1`), sqlalchemy (`:varname`), embedded (`:varname`), mysql (`%(varname)s`), sqlite (`?`). Default style is embedded / `:varname`.
-* Dynamic attribute/value lists in `SELECT`,  `WHERE`, `INSERT`, and `UPDATE` syntax
-* Block composition
-
+* Dynamic attribute/value lists in `SELECT`,  `WHERE`, `INSERT`, and `UPDATE` syntax.
+* Block composition.
+* [DB-API 2.0](https://peps.python.org/pep-0249/) compatibility.

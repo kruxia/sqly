@@ -27,6 +27,14 @@ if __name__ == "__main__":
                 "isort~=5.12.0",
                 "twine~=4.0.2",
             ],
+            "docs": [
+                "mkdocs~=1.4.3",
+                "mkdocs-autorefs~=0.4.1",
+                "mkdocs-material~=9.1.19",
+                "mkdocs-material-extensions~=1.1.1",
+                "mkdocstrings~=0.22.0",
+                "mkdocstrings-python~=1.2.1",
+            ],
             "test": [
                 "black~=23.3.0",
                 "flake8~=6.0.0",

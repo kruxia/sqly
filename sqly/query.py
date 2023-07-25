@@ -3,22 +3,23 @@ from typing import Iterable, Optional
 
 class Q:
     """
-    Convenience methods for building dynamic queries. Examples:
-
-    >>> d = {"name": "Cheeseshop"}
-    >>> f"INSERT INTO tablename ({Q.fields(d)}) VALUES ({Q.params(d)})"
-    'INSERT INTO tablename (name) VALUES (:name)'
-    >>> f"SELECT ({Q.fields(d)}) FROM tablename WHERE {Q.filters(d)}"
-    'SELECT (name) FROM tablename WHERE name = :name'
-    >>> " ".join(
-    ...     "UPDATE tablename SET",
-    ...     Q.assigns(['name']),
-    ...     "WHERE",
-    ...     Q.filter('id'),
-    ... )
-    'UPDATE tablename SET name = :name WHERE id = :id'
-    >>> f"DELETE FROM tablename WHERE {Q.filters(d, incl=['name'])}"
-    'DELETE FROM tablename WHERE name = :name'
+    Convenience methods for building dynamic queries. 
+    
+    Examples:
+        >>> d = {"name": "Cheeseshop"}
+        >>> f"INSERT INTO tablename ({Q.fields(d)}) VALUES ({Q.params(d)})"
+        'INSERT INTO tablename (name) VALUES (:name)'
+        >>> f"SELECT ({Q.fields(d)}) FROM tablename WHERE {Q.filters(d)}"
+        'SELECT (name) FROM tablename WHERE name = :name'
+        >>> " ".join(
+        ...     "UPDATE tablename SET",
+        ...     Q.assigns(['name']),
+        ...     "WHERE",
+        ...     Q.filter('id'),
+        ... )
+        'UPDATE tablename SET name = :name WHERE id = :id'
+        >>> f"DELETE FROM tablename WHERE {Q.filters(d, incl=['name'])}"
+        'DELETE FROM tablename WHERE name = :name'
     """
 
     @classmethod
