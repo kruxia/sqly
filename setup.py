@@ -30,6 +30,7 @@ if __name__ == "__main__":
             "test": [
                 "black~=23.3.0",
                 "flake8~=6.0.0",
+                "mypy",
                 "pytest~=7.3.1",
                 "pytest-click~=1.1.0",
                 "pytest-cov~=4.0.0",

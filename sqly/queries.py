@@ -36,7 +36,8 @@ def SELECT(
         query.append(f"LIMIT {limit}")
     if offset:
         query.append(f"OFFSET {offset}")
-    return query
+
+    return " ".join(query)
 
 
 def INSERT(relation: str, data: Iterable) -> str:

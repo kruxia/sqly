@@ -35,7 +35,7 @@ def test_select(fields, filters, orderby, limit, offset):
     }
     q = queries.SELECT(tablename, **kwargs)
     print(q)
-    assert isinstance(q, list)
+    assert isinstance(q, str)
     assert f"FROM {tablename}" in q
     # The presence of certain clauses is based on the inclusion of those clauses
     assert ("SELECT *" not in q) is bool(fields)
