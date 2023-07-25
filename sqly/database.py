@@ -104,9 +104,6 @@ class Database:
         cursor. The results of the method can be cast to a list via `list(...)` or can
         be iterated through one at a time.
 
-        If `.select()` is called with a previously-created cursor, that cursor will
-        be reused and the same cursor returned from the method call.
-
         If the query fails: Rollback the connection and re-raise the exception, as a
         convenience to the user not to leave the connection in an unusable state.
 
@@ -121,7 +118,7 @@ class Database:
                 argument.
             
         Yields:
-            record (Mapping): A DB-API 2.0 compliant database cursor.
+            record (Mapping): A mapping object that contains a database record.
         """
         cursor = self.execute(connection, query, data)
         fields = [d[0] for d in cursor.description]
