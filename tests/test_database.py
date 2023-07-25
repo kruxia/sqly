@@ -147,7 +147,8 @@ def test_cursor_as_connection(dialect_name, database_url):
         with pytest.raises(Exception, match="foo"):  # no table, not cursor.rollback
             database.execute(cursor, "INSERT INTO foo VALUES (1, 2)")
         widget = {"id": 1, "sku": "COG-01"}
-        database.execute(cursor, "INSERT INTO widgets VALUES (:id, :sku)", widget)
+        cursor2 = database.execute(cursor, "INSERT INTO widgets VALUES (:id, :sku)", widget)
+        assert cursor2 == cursor
         record = next(database.query(cursor, "SELECT * FROM widgets"))
         assert record == widget
 

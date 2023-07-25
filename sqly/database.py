@@ -28,8 +28,10 @@ class Database:
         if hasattr(connection, 'connection'):
             connection = connection.connection
         try:
-            cursor = connection.execute(*self.sql.render(sql_query, data))
+            cursor = connection.execute(*self.sql.render(query, data))
         except Exception as exc:
+            if hasattr(connection, 'connection'):
+                connection = connection.connection
             connection.rollback()
             raise exc
 
