@@ -30,24 +30,26 @@ class Database:
         try:
             cursor = connection.execute(*self.sql.render(query, data))
         except Exception as exc:
-            if hasattr(connection, 'connection'):
+            # If the connection is a cursor, get the underlying connection to rollback,
+            # because cursors don't have a rollback method.
+            if hasattr(connection, "connection"):
                 connection = connection.connection
             connection.rollback()
             raise exc
 
         return cursor
 
-    def query(
+    def select(
         self,
         connection: Any,
-        sql_query: str | Iterator,
+        query: str | Iterator,
         data: Optional[Mapping] = None,
         Constructor=dict,
     ):
         """
         Execute the given query on the connection, and yield result records.
         """
-        cursor = self.execute(connection, sql_query, data)
+        cursor = self.execute(connection, query, data)
         fields = [d[0] for d in cursor.description]
         for row in cursor:
             yield Constructor(zip(fields, row))

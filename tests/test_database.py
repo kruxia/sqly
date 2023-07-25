@@ -43,7 +43,9 @@ def test_execute_query_ok(dialect_name, database_url):
         )
         print(f"{connection=}")
         # - the row is in the table
-        row = next(database.query(cursor, "SELECT * from widgets WHERE id=:id", widget))
+        row = next(
+            database.select(cursor, "SELECT * from widgets WHERE id=:id", widget)
+        )
         assert row == widget
 
         # after we rollback, the row doesn't exist (NOTE: This might not work on all
@@ -51,7 +53,9 @@ def test_execute_query_ok(dialect_name, database_url):
         connection.rollback()
         with pytest.raises(Exception):
             row = next(
-                database.query(connection, "SELECT * from widgets WHERE id=:id", widget)
+                database.select(
+                    connection, "SELECT * from widgets WHERE id=:id", widget
+                )
             )
 
     finally:
@@ -100,12 +104,12 @@ def test_execute_invalid_rollback(dialect_name, database_url):
         database.execute(connection, "CREATE TABLE widgets (id int, sku varchar)")
         connection.commit()
         database.execute(connection, insert_query, widget)
-        rows = list(database.query(connection, "SELECT * FROM widgets"))
+        rows = list(database.select(connection, "SELECT * FROM widgets"))
         assert len(rows) == 1
 
         # and we can still rollback the connection (the insert)
         connection.rollback()
-        rows = list(database.query(connection, "SELECT * FROM widgets"))
+        rows = list(database.select(connection, "SELECT * FROM widgets"))
         assert len(rows) == 0
 
     finally:
@@ -142,14 +146,18 @@ def test_cursor_as_connection(dialect_name, database_url):
         #     connection = adaptor.connect(**conn_info)
         # else:
         connection = adaptor.connect(database_url)
-        cursor = database.execute(connection, "CREATE TABLE WIDGETS (id int, sku varchar)")
+        cursor = database.execute(
+            connection, "CREATE TABLE WIDGETS (id int, sku varchar)"
+        )
         connection.commit()
         with pytest.raises(Exception, match="foo"):  # no table, not cursor.rollback
             database.execute(cursor, "INSERT INTO foo VALUES (1, 2)")
         widget = {"id": 1, "sku": "COG-01"}
-        cursor2 = database.execute(cursor, "INSERT INTO widgets VALUES (:id, :sku)", widget)
+        cursor2 = database.execute(
+            cursor, "INSERT INTO widgets VALUES (:id, :sku)", widget
+        )
         assert cursor2 == cursor
-        record = next(database.query(cursor, "SELECT * FROM widgets"))
+        record = next(database.select(cursor, "SELECT * FROM widgets"))
         assert record == widget
 
     finally:
