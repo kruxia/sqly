@@ -126,3 +126,46 @@ def test_execute_invalid_rollback(dialect_name, database_url):
         db_file = database_url.split("file://")[-1] if "file://" in database_url else ""
         if os.path.exists(db_file):
             os.remove(db_file)
+
+
+@pytest.mark.parametrize("dialect_name,database_url", fixtures.test_databases)
+def test_cursor_as_connection(dialect_name, database_url):
+    """
+    Database queries can re-use a cursor during the same connection.
+    """
+    try:
+        # connect to the database
+        database = Database(dialect=dialect_name)
+        adaptor = database.dialect.load_adaptor()
+        # if database.dialect == Dialect.MYSQL:
+        #     conn_info = json.loads(database_url)
+        #     connection = adaptor.connect(**conn_info)
+        # else:
+        connection = adaptor.connect(database_url)
+        cursor = database.execute(connection, "CREATE TABLE WIDGETS (id int, sku varchar)")
+        connection.commit()
+        with pytest.raises(Exception, match="foo"):  # no table, not cursor.rollback
+            database.execute(cursor, "INSERT INTO foo VALUES (1, 2)")
+        widget = {"id": 1, "sku": "COG-01"}
+        database.execute(cursor, "INSERT INTO widgets VALUES (:id, :sku)", widget)
+        record = next(database.query(cursor, "SELECT * FROM widgets"))
+        assert record == widget
+
+    finally:
+        # clean up the tables, if any
+        try:
+            connection.execute("DROP TABLE widgets")
+            connection.commit()
+        except Exception:
+            ...
+
+        try:
+            connection.execute("DROP TABLE sqly_migrations")
+            connection.commit()
+        except Exception:
+            ...
+
+        # clean up database file if any
+        db_file = database_url.split("file://")[-1] if "file://" in database_url else ""
+        if os.path.exists(db_file):
+            os.remove(db_file)

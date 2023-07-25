@@ -24,8 +24,9 @@ class Database:
         """
         Execute the given query on the connection.
         """
-        # If the query fails: Rollback the connection and re-raise the exception, as a
-        # convenience to the user not to leave the connection in an unusable state.
+        # if the connection is a cursor, get the underlying connection.
+        if hasattr(connection, 'connection'):
+            connection = connection.connection
         try:
             cursor = connection.execute(*self.sql.render(sql_query, data))
         except Exception as exc:
