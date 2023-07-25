@@ -1,6 +1,7 @@
-pip-wheel-metadata/sqly.dist-info
-sqly.egg-info/
-.envrc
-sqly/__pycache__/
-*.pyc
 .coverage
+.envrc
+*.pyc
+pip-wheel-metadata/sqly.dist-info
+site/
+sqly.egg-info/
+sqly/__pycache__/
