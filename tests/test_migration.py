@@ -142,7 +142,7 @@ def test_migration_delete_query(dialect_name):
 def test_migration_migrate(dialect_name, database_url):
     try:
         dialect = Dialect(dialect_name)
-        adaptor = dialect.load_adaptor()
+        adaptor = dialect.adaptor()
         # if dialect == Dialect.MYSQL:
         #     conn_info = json.loads(database_url)
         #     connection = adaptor.connect(**conn_info)

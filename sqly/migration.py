@@ -1,3 +1,7 @@
+"""
+Implementation of the sqly migration commands. See the [CLI Usage document](../cli.md)
+for more information about usage.
+"""
 import json
 import os
 import re
@@ -7,6 +11,7 @@ from datetime import datetime, timezone
 from glob import glob
 from importlib import import_module
 from pathlib import Path
+from typing import Optional
 
 import networkx as nx
 import yaml
@@ -30,21 +35,35 @@ def app_migrations_path(app):
 
 def migration_timestamp():
     """
-    An integer with the UTC timestamp to millisecond resolution (17 digits => bigint)
+    Return an integer with the UTC timestamp to millisecond resolution (17 digits => bigint)
     """
     return int(datetime.now(tz=timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3])
 
 
 @dataclass
 class Migration:
+    """
+    Represents a single migration.
+    
+    Arguments:
+        app (str): The name of the app (module) that owns the Migration.
+        ts (int): (`YYYYmmddHHMMSSJJJ`) An integer representing the timestamp when the 
+            migration was created (millisecond resolution).
+        name (str): The (optional) name of the migration provides a short description.
+        depends (list[str]): A list of migrations (keys) that this migration depends on.
+        applied (Optional[datetime]): If the migration has been applied, the datetime.
+        doc (Optional[str]): A document string describing the migration.
+        up (Optional[str]): SQL implmenting the "up" or "forward" migration.
+        dn (Optional[str]): SQL implementing the "down" or "reverse" migration.
+    """
     app: str
     ts: int = field(default_factory=migration_timestamp)
     name: str = field(default_factory=str)
     depends: list[str] = field(default_factory=list)
-    applied: datetime | None = None
-    doc: str | None = None
-    up: str | None = None
-    dn: str | None = None
+    applied: Optional[datetime] = None
+    doc: Optional[str] = None
+    up: Optional[str] = None
+    dn: Optional[str] = None
 
     def __post_init__(self):
         # replace non-word characters in the name with an underscore
@@ -141,9 +160,12 @@ class Migration:
     @classmethod
     def create(cls, app, *other_apps, name=None):
         """
+        Create a new migration for the given app (module) name.
+
         Every new migration depends on all the "leaf" nodes in the existing migration
         graph. Leaf nodes are those with out_degree == 0 (no edges pointing out). See:
         <https://networkx.org/documentation/stable/reference/classes/generated/networkx.DiGraph.out_degree.html>.
+        
         For a worked example, see:
         <https://stackoverflow.com/questions/31946253/find-end-nodes-leaf-nodes-in-radial-tree-networkx-graph/31953001>.
 
@@ -274,7 +296,8 @@ class Migration:
         connection.execute("begin;")
 
         sql = getattr(self, direction)
-        connection.execute(sql)
+        if sql:
+            connection.execute(sql)
 
         if direction == "up":
             query = self.insert_query(dialect)

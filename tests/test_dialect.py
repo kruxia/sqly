@@ -7,8 +7,8 @@ from tests import fixtures
 @pytest.mark.parametrize("dialect_name", fixtures.valid_dialect_names)
 def test_dialect_import_adaptor(dialect_name):
     dialect = Dialect(dialect_name)
-    mod = dialect.load_adaptor()
-    assert mod.__name__ == dialect.adaptor
+    mod = dialect.adaptor()
+    assert mod.__name__ == dialect.adaptor_name
     assert dialect.output_format.is_keyed != dialect.output_format.is_positional
 
 

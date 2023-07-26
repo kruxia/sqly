@@ -24,16 +24,15 @@ class SQL:
         Render a query string and its parameters for this SQL dialect.
 
         Arguments:
+            query (str | Iterator): a string or iterator of strings.
+            data (Mapping): a keyword dict used to render the query parameters.
 
-        * query: a string or iterator of strings.
-        * data: a keyword dict used to render the query.
+        Returns:
+            (str): the rendered query string.
+            (tuple | dict): depends on the output format:
 
-        Returns a 2-tuple:
-
-        1. the rendered query string.
-        2. depends on the output format:
-            - positional output formats (QMARK, NUMBERED) return a tuple of values
-            - named output formats (NAMED, PYFORMAT) return a dict
+                - positional output formats (QMARK, NUMBERED) return a tuple of values
+                - named output formats (NAMED, PYFORMAT) return a dict
         """
         # ordered list of fields for positional outputs (closure for replace_parameter)
         fields = []

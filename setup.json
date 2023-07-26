@@ -14,7 +14,7 @@
   ],
   "entry_points": {
     "console_scripts": [
-      "sqly = sqly.__main__:main"
+      "sqly = sqly.__main__:sqly"
     ]
   },
   "package_data": {

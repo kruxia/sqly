@@ -9,12 +9,12 @@ from .sql import SQL
 class Database:
     """
     Interface class to make ergonomic queries on a database. Initialize the Database
-    instance with a SQL [dialect](../sqly.dialect), then use the query methods on the
+    instance with a SQL [dialect](sqly.dialect.md), then use the query methods on the
     instance to render and execute queries with "named" parameters on the given database
     connection, even if that database's queries use a different parameter style.
 
     Arguments:
-        dialect (Dialect): The SQL [dialect](../sqly.dialect) used by this database.
+        dialect (Dialect): The SQL [dialect](sqly.dialect.md) used by this database.
 
     **Methods:**
 
@@ -23,12 +23,12 @@ class Database:
 
     Examples:
         Initialize the Database and Connection instances:
-        
+
         >>> import sqlite3
         >>> from sqly import Database
         >>> connection = sqlite3.connect(":memory:")
         >>> database = Database(dialect="sqlite")
-        
+
         Create a table to make queries with:
 
         >>> cursor = database.execute(connection,
@@ -100,7 +100,7 @@ class Database:
         """
         Execute the given query on the connection, and yield result records.
 
-        The `.select()` method is a generator which iterates over a native database 
+        The `.select()` method is a generator which iterates over a native database
         cursor. The results of the method can be cast to a list via `list(...)` or can
         be iterated through one at a time.
 
@@ -114,9 +114,9 @@ class Database:
             data (Optional[Mapping]): A data mapping that will be rendered as params
                 with the query. Optional, but required if the query contains parameters.
             Constructor (class): A constructor to use to build records from the results.
-                The constructor must take the results of `zip(keys, values)` as its 
+                The constructor must take the results of `zip(keys, values)` as its
                 argument.
-            
+
         Yields:
             record (Mapping): A mapping object that contains a database record.
         """

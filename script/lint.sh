@@ -1,5 +1,6 @@
 #!/bin/bash
-
-isort --check ${@:-.}
-black --check ${@:-.}
-flake8 ${@:-.}
+set -eux
+isort --check ${@:-sqly}
+black --check ${@:-sqly}
+flake8 ${@:-sqly}
+mypy -p ${@:-sqly}

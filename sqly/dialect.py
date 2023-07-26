@@ -1,8 +1,41 @@
+"""
+Definitions for different dialects of SQL databases. Each
+[Dialect](./#sqly.dialect.Dialect):
+
+* is named for its database adaptor (driver module).
+* defines an [OutputFormat](./#sqly.dialect.OutputFormat) that the Dialect uses to
+  render queries with parameters.
+* has an [`adaptor()`](./#sqly.dialect.Dialect.adaptor) method that imports and returns 
+  the adaptor itself.
+
+Examples:
+    List the supported Dialects:
+    >>> for dialect in Dialect.__members__.values(): print(repr(dialect))
+    <Dialect.PSYCOPG: 'psycopg'>
+    <Dialect.SQLITE: 'sqlite'>
+
+    Interact with one of the Dialects:
+    >>> from sqly import Dialect
+    >>> dialect = Dialect("psycopg")
+    >>> dialect.output_format
+    <OutputFormat.PYFORMAT: '%(field)s'>
+    >>> dialect.output_format.is_keyed
+    True
+    >>> dialect.adaptor_name
+    'psycopg'
+    >>> dialect.adaptor() # doctest:+ELLIPSIS
+    <module 'psycopg' from '.../psycopg/__init__.py'>
+"""
 from enum import Enum
 from importlib import import_module
+from typing import Any
 
 
 class OutputFormat(Enum):
+    """
+    The output format for a given dialect.
+    """
+
     # -- positional --
     QMARK = "?"
     FORMAT = "%s"
@@ -13,16 +46,23 @@ class OutputFormat(Enum):
     PYFORMAT = "%(field)s"
 
     @property
-    def is_keyed(self):
+    def is_keyed(self) -> bool:
+        """If true, this `OutputFormat` uses keyword parameters."""
         return self in {self.NAMED, self.PYFORMAT}
 
     @property
-    def is_positional(self):
+    def is_positional(self) -> bool:
+        """If true, this `OutputFormat` uses positional parameters."""
         return not self.is_keyed
 
 
 class Dialect(Enum):
-    # the value of each Dialect represents the syntax that it uses for query parameters
+    """
+    Each Dialect is named for the adaptor (driver) interface that it uses and
+    encapsulates the options that interface uses for such things as query parameter
+    formatting.
+    """
+
     PSYCOPG = "psycopg"
     SQLITE = "sqlite"
     # --
@@ -35,34 +75,41 @@ class Dialect(Enum):
     # PSYCOPG2 = "psycopg2"
 
     @property
-    def output_format(self):
+    def output_format(self) -> OutputFormat:
+        """The [OutputFormat](./#sqly.dialect.OutputFormat) for this Dialect."""
         return {
-            self.PSYCOPG: OutputFormat.PYFORMAT,
-            self.SQLITE: OutputFormat.QMARK,
+            "psycopg": OutputFormat.PYFORMAT,
+            "sqlite": OutputFormat.QMARK,
             # --
-            # self.MYSQL: OutputFormat.FORMAT,
-            # self.PYODBC: OutputFormat.QMARK,
+            # "mysql": OutputFormat.FORMAT,
+            # "pyodbc": OutputFormat.QMARK,
             # # --
-            # self.ASYNCPG: OutputFormat.NUMBERED,
-            # self.DATABASES: OutputFormat.NAMED,
-            # self.SQLALCHEMY: OutputFormat.PYFORMAT,
-            # self.PSYCOPG2: OutputFormat.PYFORMAT,
-        }[self]
+            # "asyncpg": OutputFormat.NUMBERED,
+            # "databases": OutputFormat.NAMED,
+            # "sqlalchemy": OutputFormat.PYFORMAT,
+            # "psycopg2": OutputFormat.PYFORMAT,
+        }[self.value]
 
     @property
-    def adaptor(self):
+    def adaptor_name(self) -> str:
+        """The name of the adaptor (driver module) to import for this Dialect."""
         return {
-            self.PSYCOPG: "psycopg",
-            self.SQLITE: "sqlite3",
+            "psycopg": "psycopg",
+            "sqlite": "sqlite3",
             # --
-            # self.MYSQL: "MySQLdb",
-            # self.PYODBC: "pyodbc",
+            # "mysql": "MySQLdb",
+            # "pyodbc": "pyodbc",
             # # --
-            # self.ASYNCPG: "asyncpg",
-            # self.DATABASES: "databases",
-            # self.SQLALCHEMY: "sqlalchemy",
-            # self.PSYCOPG2: "psycopg2",
-        }[self]
+            # "asyncpg": "asyncpg",
+            # "databases": "databases",
+            # "sqlalchemy": "sqlalchemy",
+            # "psycopg2": "psycopg2",
+        }[self.value]
 
-    def load_adaptor(self):
-        return import_module(self.adaptor)
+    def adaptor(self) -> Any:
+        """The adaptor (driver module) itself for this Dialect.
+
+        Returns:
+            (Any): A database adaptor (driver module).
+        """
+        return import_module(self.adaptor_name)

@@ -1,3 +1,7 @@
+"""
+The `sqly.__main__` module provides the `sqly` command line command. This is the code
+reference documentation; see the [CLI Usage](../cli.md) document for usage information.
+"""
 # import json
 import os
 import sys
@@ -10,11 +14,11 @@ from .migration import Migration
 
 
 @click.group()
-def main():  # pragma: no cover
+def sqly():  # pragma: no cover
     pass
 
 
-@main.command()
+@sqly.command()
 @click.option(
     "-n",
     "--name",
@@ -34,7 +38,7 @@ def migration(app, other_apps, name):
     print("    depends:\n      -", "\n      - ".join(migration.depends or "[]"))
 
 
-@main.command()
+@sqly.command()
 @click.argument("apps", nargs=-1)
 @click.option("-i", "--include-depends", is_flag=True, help="Include dependencies")
 def migrations(apps, include_depends=False):
@@ -52,7 +56,7 @@ def migrations(apps, include_depends=False):
                     print("\t=> " + "\n\t=> ".join(migration.depends))
 
 
-@main.command()
+@sqly.command()
 @click.argument("migration_key")
 @click.option(
     "-u",
@@ -81,7 +85,7 @@ def migrate(migration_key, database_url=None, dialect=None, dryrun=False):
         sys.exit(1)
 
     dialect = Dialect(dialect)
-    adaptor = dialect.load_adaptor()
+    adaptor = dialect.adaptor()
     # if dialect == Dialect.MYSQL:
     #     conn_info = json.loads(database_url)
     #     connection = adaptor.connect(**conn_info)
@@ -93,4 +97,4 @@ def migrate(migration_key, database_url=None, dialect=None, dryrun=False):
 
 
 if __name__ == "__main__":  # pragma: no cover
-    main()
+    sqly()

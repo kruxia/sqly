@@ -26,7 +26,7 @@ def test_execute_query_ok(dialect_name, database_url):
     try:
         # connect to the database
         database = Database(dialect=dialect_name)
-        adaptor = database.dialect.load_adaptor()
+        adaptor = database.dialect.adaptor()
         # if database.dialect == Dialect.MYSQL:
         #     conn_info = json.loads(database_url)
         #     connection = adaptor.connect(**conn_info)
@@ -86,7 +86,7 @@ def test_execute_invalid_rollback(dialect_name, database_url):
     try:
         # connect to the database
         database = Database(dialect=dialect_name)
-        adaptor = database.dialect.load_adaptor()
+        adaptor = database.dialect.adaptor()
         # if database.dialect == Dialect.MYSQL:
         #     conn_info = json.loads(database_url)
         #     connection = adaptor.connect(**conn_info)
@@ -140,7 +140,7 @@ def test_cursor_as_connection(dialect_name, database_url):
     try:
         # connect to the database
         database = Database(dialect=dialect_name)
-        adaptor = database.dialect.load_adaptor()
+        adaptor = database.dialect.adaptor()
         # if database.dialect == Dialect.MYSQL:
         #     conn_info = json.loads(database_url)
         #     connection = adaptor.connect(**conn_info)
