@@ -1,2 +1,0 @@
-# sqly.database
-::: sqly.database

@@ -40,7 +40,7 @@ def test_sql_render(dialect_name):
     query, params = get_query_params(sql, q, data)
     print(query, params)
 
-    if sql.dialect.output_format.is_keyed:
+    if sql.dialect.param_format.is_keyed:
         assert len(params) == len(data)
     else:
         assert len(params) == len(data) + len(filters)

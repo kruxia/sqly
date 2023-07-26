@@ -3,7 +3,7 @@ Definitions for different dialects of SQL databases. Each
 [Dialect](./#sqly.dialect.Dialect):
 
 * is named for its database adaptor (driver module).
-* defines an [OutputFormat](./#sqly.dialect.OutputFormat) that the Dialect uses to
+* defines an [ParamFormat](./#sqly.dialect.ParamFormat) that the Dialect uses to
   render queries with parameters.
 * has an [`adaptor()`](./#sqly.dialect.Dialect.adaptor) method that imports and returns 
   the adaptor itself.
@@ -17,9 +17,9 @@ Examples:
     Interact with one of the Dialects:
     >>> from sqly import Dialect
     >>> dialect = Dialect("psycopg")
-    >>> dialect.output_format
-    <OutputFormat.PYFORMAT: '%(field)s'>
-    >>> dialect.output_format.is_keyed
+    >>> dialect.param_format
+    <ParamFormat.PYFORMAT: '%(field)s'>
+    >>> dialect.param_format.is_keyed
     True
     >>> dialect.adaptor_name
     'psycopg'
@@ -31,7 +31,7 @@ from importlib import import_module
 from typing import Any
 
 
-class OutputFormat(Enum):
+class ParamFormat(Enum):
     """
     The output format for a given dialect.
     """
@@ -47,12 +47,12 @@ class OutputFormat(Enum):
 
     @property
     def is_keyed(self) -> bool:
-        """If true, this `OutputFormat` uses keyword parameters."""
+        """If true, this `ParamFormat` uses keyword parameters."""
         return self in {self.NAMED, self.PYFORMAT}
 
     @property
     def is_positional(self) -> bool:
-        """If true, this `OutputFormat` uses positional parameters."""
+        """If true, this `ParamFormat` uses positional parameters."""
         return not self.is_keyed
 
 
@@ -75,19 +75,19 @@ class Dialect(Enum):
     # PSYCOPG2 = "psycopg2"
 
     @property
-    def output_format(self) -> OutputFormat:
-        """The [OutputFormat](./#sqly.dialect.OutputFormat) for this Dialect."""
+    def param_format(self) -> ParamFormat:
+        """The [ParamFormat](./#sqly.dialect.ParamFormat) for this Dialect."""
         return {
-            "psycopg": OutputFormat.PYFORMAT,
-            "sqlite": OutputFormat.QMARK,
+            "psycopg": ParamFormat.PYFORMAT,
+            "sqlite": ParamFormat.QMARK,
             # --
-            # "mysql": OutputFormat.FORMAT,
-            # "pyodbc": OutputFormat.QMARK,
+            # "mysql": ParamFormat.FORMAT,
+            # "pyodbc": ParamFormat.QMARK,
             # # --
-            # "asyncpg": OutputFormat.NUMBERED,
-            # "databases": OutputFormat.NAMED,
-            # "sqlalchemy": OutputFormat.PYFORMAT,
-            # "psycopg2": OutputFormat.PYFORMAT,
+            # "asyncpg": ParamFormat.NUMBERED,
+            # "databases": ParamFormat.NAMED,
+            # "sqlalchemy": ParamFormat.PYFORMAT,
+            # "psycopg2": ParamFormat.PYFORMAT,
         }[self.value]
 
     @property

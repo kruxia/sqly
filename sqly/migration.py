@@ -284,7 +284,7 @@ class Migration:
     ):
         """
         Migrate the database to this migration, either up or down, using the given
-        (sqly) Database.
+        database connection.
 
         Algorithm:
 

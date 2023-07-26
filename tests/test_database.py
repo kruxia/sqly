@@ -3,18 +3,18 @@ import os
 
 import pytest
 
-from sqly.database import Database
 from sqly.dialect import Dialect
+from sqly.sql import SQL
 from tests import fixtures
 
 
 @pytest.mark.parametrize("dialect", [Dialect("sqlite"), "sqlite"])
 def test_init_database_dialect(dialect):
     """
-    Database can be initialized with dialect as either Dialect or str
+    SQL instance can be initialized with dialect as either Dialect or str
     """
-    database = Database(dialect=dialect)
-    assert isinstance(database.dialect, Dialect)
+    sql = SQL(dialect=dialect)
+    assert isinstance(sql.dialect, Dialect)
 
 
 @pytest.mark.parametrize("dialect_name,database_url", fixtures.test_databases)
@@ -25,9 +25,9 @@ def test_execute_query_ok(dialect_name, database_url):
     """
     try:
         # connect to the database
-        database = Database(dialect=dialect_name)
-        adaptor = database.dialect.adaptor()
-        # if database.dialect == Dialect.MYSQL:
+        sql = SQL(dialect=dialect_name)
+        adaptor = sql.dialect.adaptor()
+        # if sql.dialect == Dialect.MYSQL:
         #     conn_info = json.loads(database_url)
         #     connection = adaptor.connect(**conn_info)
         # else:
@@ -38,14 +38,10 @@ def test_execute_query_ok(dialect_name, database_url):
         print(f"{connection=}")
         widget = {"id": 1, "sku": "COG-01"}
         # - the following table exists (and using the cursor to execute is fine)
-        database.execute(
-            cursor, "INSERT INTO widgets (id, sku) VALUES (:id, :sku)", widget
-        )
+        sql.execute(cursor, "INSERT INTO widgets (id, sku) VALUES (:id, :sku)", widget)
         print(f"{connection=}")
         # - the row is in the table
-        row = next(
-            database.select(cursor, "SELECT * from widgets WHERE id=:id", widget)
-        )
+        row = next(sql.select(cursor, "SELECT * from widgets WHERE id=:id", widget))
         assert row == widget
 
         # after we rollback, the row doesn't exist (NOTE: This might not work on all
@@ -53,9 +49,7 @@ def test_execute_query_ok(dialect_name, database_url):
         connection.rollback()
         with pytest.raises(Exception):
             row = next(
-                database.select(
-                    connection, "SELECT * from widgets WHERE id=:id", widget
-                )
+                sql.select(connection, "SELECT * from widgets WHERE id=:id", widget)
             )
 
     finally:
@@ -85,9 +79,9 @@ def test_execute_invalid_rollback(dialect_name, database_url):
     """
     try:
         # connect to the database
-        database = Database(dialect=dialect_name)
-        adaptor = database.dialect.adaptor()
-        # if database.dialect == Dialect.MYSQL:
+        sql = SQL(dialect=dialect_name)
+        adaptor = sql.dialect.adaptor()
+        # if sql.dialect == Dialect.MYSQL:
         #     conn_info = json.loads(database_url)
         #     connection = adaptor.connect(**conn_info)
         # else:
@@ -98,18 +92,18 @@ def test_execute_invalid_rollback(dialect_name, database_url):
         widget = {"id": 1, "sku": "COG-01"}
         with pytest.raises(Exception):
             # table widgets doesn't exist
-            database.execute(connection, insert_query, widget)
+            sql.execute(connection, insert_query, widget)
 
         # the connection is ready for the next queries
-        database.execute(connection, "CREATE TABLE widgets (id int, sku varchar)")
+        sql.execute(connection, "CREATE TABLE widgets (id int, sku varchar)")
         connection.commit()
-        database.execute(connection, insert_query, widget)
-        rows = list(database.select(connection, "SELECT * FROM widgets"))
+        sql.execute(connection, insert_query, widget)
+        rows = list(sql.select(connection, "SELECT * FROM widgets"))
         assert len(rows) == 1
 
         # and we can still rollback the connection (the insert)
         connection.rollback()
-        rows = list(database.select(connection, "SELECT * FROM widgets"))
+        rows = list(sql.select(connection, "SELECT * FROM widgets"))
         assert len(rows) == 0
 
     finally:
@@ -135,29 +129,25 @@ def test_execute_invalid_rollback(dialect_name, database_url):
 @pytest.mark.parametrize("dialect_name,database_url", fixtures.test_databases)
 def test_cursor_as_connection(dialect_name, database_url):
     """
-    Database queries can re-use a cursor during the same connection.
+    SQL queries can re-use a cursor during the same connection.
     """
     try:
         # connect to the database
-        database = Database(dialect=dialect_name)
-        adaptor = database.dialect.adaptor()
-        # if database.dialect == Dialect.MYSQL:
+        sql = SQL(dialect=dialect_name)
+        adaptor = sql.dialect.adaptor()
+        # if sql.dialect == Dialect.MYSQL:
         #     conn_info = json.loads(database_url)
         #     connection = adaptor.connect(**conn_info)
         # else:
         connection = adaptor.connect(database_url)
-        cursor = database.execute(
-            connection, "CREATE TABLE WIDGETS (id int, sku varchar)"
-        )
+        cursor = sql.execute(connection, "CREATE TABLE WIDGETS (id int, sku varchar)")
         connection.commit()
         with pytest.raises(Exception, match="foo"):  # no table, not cursor.rollback
-            database.execute(cursor, "INSERT INTO foo VALUES (1, 2)")
+            sql.execute(cursor, "INSERT INTO foo VALUES (1, 2)")
         widget = {"id": 1, "sku": "COG-01"}
-        cursor2 = database.execute(
-            cursor, "INSERT INTO widgets VALUES (:id, :sku)", widget
-        )
+        cursor2 = sql.execute(cursor, "INSERT INTO widgets VALUES (:id, :sku)", widget)
         assert cursor2 == cursor
-        record = next(database.select(cursor, "SELECT * FROM widgets"))
+        record = next(sql.select(cursor, "SELECT * FROM widgets"))
         assert record == widget
 
     finally:

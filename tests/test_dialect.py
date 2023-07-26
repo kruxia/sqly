@@ -1,6 +1,6 @@
 import pytest
 
-from sqly.dialect import Dialect, OutputFormat
+from sqly.dialect import Dialect, ParamFormat
 from tests import fixtures
 
 
@@ -9,9 +9,9 @@ def test_dialect_import_adaptor(dialect_name):
     dialect = Dialect(dialect_name)
     mod = dialect.adaptor()
     assert mod.__name__ == dialect.adaptor_name
-    assert dialect.output_format.is_keyed != dialect.output_format.is_positional
+    assert dialect.param_format.is_keyed != dialect.param_format.is_positional
 
 
 def test_dialect_keyed_positional():
-    assert OutputFormat.NAMED.is_keyed
-    assert OutputFormat.QMARK.is_positional
+    assert ParamFormat.NAMED.is_keyed
+    assert ParamFormat.QMARK.is_positional
