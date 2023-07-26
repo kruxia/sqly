@@ -9,8 +9,8 @@ from .lib import walk
 @dataclass
 class SQL:
     """
-    Create and render SQL queries with a given dialect. All queries are rendered
-    according to that dialect.
+    Create and render SQL queries with a given database dialect. All queries are
+    rendered according to the requirements of that dialect.
     """
 
     dialect: Dialect

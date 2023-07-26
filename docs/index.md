@@ -1,4 +1,5 @@
-# Welcome to SQLY
+# Introduction
+
 
 
 ## Project Documentation
