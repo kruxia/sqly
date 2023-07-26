@@ -114,7 +114,6 @@ sql.execute(
 )
 # on second thought, let's just rename it so it's more cheesy
 conn.rollback()
-data
 sql.execute(
     conn,
     queries.UPDATE(
