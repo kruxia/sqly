@@ -1,0 +1,37 @@
+# adapted from
+# <https://medium.com/@VersuS_/automate-pypi-releases-with-github-actions-4c5a9cfe947d>
+name: Publish to PyPI
+on:
+  release:
+
+jobs:
+  publish:
+    name: Build and publish to PyPI
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Extract release tag
+      run: echo "RELEASE_TAG=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_ENV
+    
+    - name: Update version in setup.json
+      shell: python
+      run: >-
+        import os, json, pathlib
+        PATH = pathlib.Path(__name__).absolute().parent
+        setup_data = PATH / "setup.json"
+        with open(PATH / "setup.json") as f:
+            setup_data = json.load(f)
+        setup_data["version"] = os.environ["RELEASE_TAG"]
+        with open(PATH / "setup.json", "w") as f:
+            f.write(json.dumps(setup_data, indent=2))
+    
+    - name: Build a binary wheel
+      run: >-
+        python -m pip install wheel
+        python setup.py sdist bdist_wheel
+    
+    - name: Publish distribution to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_TOKEN }}
