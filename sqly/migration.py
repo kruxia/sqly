@@ -11,15 +11,15 @@ from datetime import datetime, timezone
 from glob import glob
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Dict, ForwardRef, Mapping, Optional, AbstractSet
+from typing import AbstractSet, Any, Dict, ForwardRef, Mapping, Optional
 
 import networkx as nx
 import yaml
 
 from . import queries
+from .dialect import Dialect
 from .query import Q
 from .sql import SQL
-from .dialect import Dialect
 
 # enable repeatable UUID-as-hash for migration keys by using the repo as the namespace.
 SQLY_UUID_NAMESPACE = uuid.uuid3(uuid.NAMESPACE_URL, "https://github.com/kruxia/sqly")
@@ -41,17 +41,17 @@ def migration_timestamp():
     return int(datetime.now(tz=timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3])
 
 
-Migration = ForwardRef('Migration')
+Migration = ForwardRef("Migration")
 
 
 @dataclass
 class Migration:
     """
     Represents a single migration.
-    
+
     Arguments:
         app (str): The name of the app (module) that owns the Migration.
-        ts (int): (`YYYYmmddHHMMSSfff`) An integer representing the timestamp when the 
+        ts (int): (`YYYYmmddHHMMSSfff`) An integer representing the timestamp when the
             migration was created (millisecond resolution).
         name (str): The (optional) name of the migration provides a short description.
         depends (list[str]): A list of migrations (keys) that this migration depends on.
@@ -60,6 +60,7 @@ class Migration:
         up (Optional[str]): SQL implmenting the "up" or "forward" migration.
         dn (Optional[str]): SQL implementing the "down" or "reverse" migration.
     """
+
     app: str
     ts: int = field(default_factory=migration_timestamp)
     name: str = field(default_factory=str)
@@ -100,7 +101,9 @@ class Migration:
         """The unique hash is based on the Migration.key."""
         return uuid.uuid3(SQLY_UUID_NAMESPACE, self.key).int
 
-    def dict(self, exclude: Optional[list]=None, exclude_none:bool=False) -> Dict[str, Any]:
+    def dict(
+        self, exclude: Optional[list] = None, exclude_none: bool = False
+    ) -> Dict[str, Any]:
         """
         The Migration serialized as a dict.
 
@@ -117,7 +120,7 @@ class Migration:
     @property
     def key(self):
         """
-        The Migration.key uniquely identifies the migration. 
+        The Migration.key uniquely identifies the migration.
         Format = `{app}:{ts}_{name}`
         """
         return f"{self.app}:{self.ts}_{self.name}"
@@ -145,7 +148,7 @@ class Migration:
     @classmethod
     def key_filepath(cls, migration_key: str) -> Path:
         """The file path of the Migration that has the given key.
-        
+
         Arguments:
             migration_key (str): The Migration key
 
@@ -156,14 +159,16 @@ class Migration:
         return app_migrations_path(app) / f"{basename}.yaml"
 
     @classmethod
-    def app_migrations(cls, app: str, include_depends: bool=True) -> Dict[str, Migration]:
+    def app_migrations(
+        cls, app: str, include_depends: bool = True
+    ) -> Dict[str, Migration]:
         """
         For a given module name, get the migrations in that module. If `include_depends`
         is `True` (the default), also include depends migrations from other apps.
 
         Arguments:
             app (str): The name of the app (module) for which to list migrations.
-            include_depends (bool): Whether to include dependency Migrations in the 
+            include_depends (bool): Whether to include dependency Migrations in the
                 listing.
 
         Returns:
@@ -202,7 +207,9 @@ class Migration:
         return migrations
 
     @classmethod
-    def create(cls, app: str, *other_apps: list[str], name: Optional[str]=None) -> Migration: 
+    def create(
+        cls, app: str, *other_apps: list[str], name: Optional[str] = None
+    ) -> Migration:
         """
         Create a new Migration object for the given app (module) name. The new Migration
         is not saved to the filesystem: It is just a Migration instance in memory.
@@ -249,7 +256,7 @@ class Migration:
 
         Arguments:
             connection (Any): A database connection.
-        
+
         Returns:
             migrations (dict[str, Migration]): A dict of Migrations by key.
         """
@@ -259,7 +266,7 @@ class Migration:
             records = []
             for row in cursor:
                 records.append(dict(zip(fields, row)))
-        
+
         except Exception as exc:
             print(str(exc))
             connection.rollback()
@@ -268,7 +275,13 @@ class Migration:
         return {m.key: m for m in set(cls(**record) for record in records)}
 
     @classmethod
-    def migrate(cls, connection: Any, dialect: Dialect, migration: Migration, dryrun: bool=False):
+    def migrate(
+        cls,
+        connection: Any,
+        dialect: Dialect,
+        migration: Migration,
+        dryrun: bool = False,
+    ):
         """
         Migrate the database to this migration, either up or down, using the given
         (sqly) Database.
@@ -276,7 +289,7 @@ class Migration:
         Algorithm:
 
         1. Collate the list of applied migrations in the database with the list of
-           migrations available in this application. 
+           migrations available in this application.
 
         2. Calculate the graph path to reach this migration and whether this is an "up"
            or "down" migration.
@@ -342,7 +355,7 @@ class Migration:
 
         Arguments:
             migrations (Mapping[str, Migration]): A mapping of Migrations by key.
-        
+
         Returns:
             graph (nx.classes.digraph.DiGraph): A networkx DiGraph of the Migrations.
         """
@@ -362,10 +375,10 @@ class Migration:
         """
         Given a Migration and a graph, return the set of all ancestors of this
         Migration. If this Migration is not in the given graph, a NetworkXError
-        Exception is raised. 
+        Exception is raised.
 
         Arguments:
-            graph (nx.classes.digraph.DiGraph): A graph of Migrations including this 
+            graph (nx.classes.digraph.DiGraph): A graph of Migrations including this
                 one.
 
         Returns:
@@ -377,28 +390,32 @@ class Migration:
         """
         Given a Migration and a graph, return the set of all descendants of this
         Migration. If this Migration is not in the given graph, a NetworkXError
-        Exception is raised. 
+        Exception is raised.
 
         Arguments:
-            graph (nx.classes.digraph.DiGraph): A graph of Migrations including this 
+            graph (nx.classes.digraph.DiGraph): A graph of Migrations including this
                 one.
 
         Returns:
-            migration keys (set): The set of migrations (keys) that are ancestors.        
+            migration keys (set): The set of migrations (keys) that are ancestors.
         """
         return nx.descendants(graph, self.key)
 
-    def yaml(self, exclude: Optional[list]=None, exclude_none:bool=False) -> str:
+    def yaml(self, exclude: Optional[list] = None, exclude_none: bool = False) -> str:
         """
-        Serialize this Migration as a YAML string. 
+        Serialize this Migration as a YAML string.
 
         Arguments:
             exclude (Optional[list]): A list of fields to exclude.
             exclude_none (bool): Whether to exclude fields with value None.
         """
-        return yaml.dump(self.dict(exclude=exclude, exclude_none=exclude_none), default_flow_style=False, sort_keys=False)
+        return yaml.dump(
+            self.dict(exclude=exclude, exclude_none=exclude_none),
+            default_flow_style=False,
+            sort_keys=False,
+        )
 
-    def save(self, exclude: Optional[list]=None, exclude_none:bool=False):
+    def save(self, exclude: Optional[list] = None, exclude_none: bool = False):
         """
         Save this Migration to the filesystem.
 
@@ -407,17 +424,25 @@ class Migration:
             exclude_none (bool): Whether to exclude fields with value None.
 
         Returns:
-            tuple (filepath, size): The filepath where the Migration was saved, and its 
+            tuple (filepath, size): The filepath where the Migration was saved, and its
                 size in bytes.
         """
         filepath = app_migrations_path(self.app) / self.filename
         os.makedirs(filepath.parent, exist_ok=True)
         with open(filepath, "wb") as f:
-            size = f.write(self.yaml(exclude=exclude, exclude_none=exclude_none).encode())
+            size = f.write(
+                self.yaml(exclude=exclude, exclude_none=exclude_none).encode()
+            )
 
         return filepath, size
 
-    def apply(self, connection: Any, dialect: Dialect, direction: str="up", dryrun: bool=False):
+    def apply(
+        self,
+        connection: Any,
+        dialect: Dialect,
+        direction: str = "up",
+        dryrun: bool = False,
+    ):
         """
         Apply the migration (direction = 'up' or 'dn') to connection database. The
         entire migration script is wrapped in a transaction. (This method is called
@@ -458,7 +483,7 @@ class Migration:
             dialect (Dialect): The SQL database dialect to render the query for.
 
         Returns:
-            tuple (str, params...): The SQL query and params formatted for the database 
+            tuple (str, params...): The SQL query and params formatted for the database
                 dialect.
         """
         data = {k: v for k, v in self.dict(exclude_none=True).items()}
@@ -474,7 +499,7 @@ class Migration:
             dialect (Dialect): The SQL database dialect to render the query for.
 
         Returns:
-            tuple (str, params...): The SQL query and params formatted for the database 
+            tuple (str, params...): The SQL query and params formatted for the database
                 dialect.
         """
         sql = queries.DELETE(
