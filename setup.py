@@ -37,6 +37,7 @@ if __name__ == "__main__":
                 "mkdocstrings-python~=1.2.1",
             ],
             "test": [
+                "sqly[migration]",
                 "black~=23.3.0",
                 "flake8~=6.0.0",
                 "mypy",
