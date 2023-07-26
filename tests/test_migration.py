@@ -148,7 +148,7 @@ def test_migration_migrate(dialect_name, database_url):
         #     connection = adaptor.connect(**conn_info)
         # else:
         connection = adaptor.connect(database_url)
-        assert not migration.Migration.database_migrations(connection)
+        assert not migration.Migration.database_migrations(connection, dialect)
         m = migration.Migration.key_load(EXISTING_MIGRATION_KEYS[0])
         migration.Migration.migrate(connection, dialect, m)
 

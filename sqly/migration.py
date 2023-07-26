@@ -248,7 +248,7 @@ class Migration:
         return migration
 
     @classmethod
-    def database_migrations(cls, connection: Any) -> Dict[str, Migration]:
+    def database_migrations(cls, connection: Any, dialect: Dialect) -> Dict[str, Migration]:
         """
         Query the database with the given `connection` and return a dict of the
         Migrations in the database, by key. If no Migrations have been applied in the
@@ -260,16 +260,13 @@ class Migration:
         Returns:
             migrations (dict[str, Migration]): A dict of Migrations by key.
         """
+        sql = SQL(dialect=dialect)
         try:
-            cursor = connection.execute("select * from sqly_migrations")
-            fields = [d[0] for d in cursor.description]
-            records = []
-            for row in cursor:
-                records.append(dict(zip(fields, row)))
+            results = sql.select(connection, "select * from sqly_migrations")
+            records = list(results)
 
         except Exception as exc:
             print(str(exc))
-            connection.rollback()
             records = []
 
         return {m.key: m for m in set(cls(**record) for record in records)}
@@ -310,7 +307,7 @@ class Migration:
             dialect. migration (Migration): The Migration that we are migrating _to_.
             dryrun (bool): Whether this is a dry run.
         """
-        db_migrations = cls.database_migrations(connection)
+        db_migrations = cls.database_migrations(connection, dialect)
         migrations = db_migrations | cls.all_migrations(migration.app)
         graph = cls.graph(migrations)
 
@@ -460,19 +457,17 @@ class Migration:
             print("DRY RUN")
             return
 
-        connection.execute("begin;")
-
-        sql = getattr(self, direction)
-        if sql:
-            connection.execute(sql)
+        migration_query = getattr(self, direction)
+        if migration_query:
+            connection.execute(migration_query)
 
         if direction == "up":
-            query = self.insert_query(dialect)
+            sqly_migrations_query = self.insert_query(dialect)
         else:
-            query = self.delete_query(dialect)
+            sqly_migrations_query = self.delete_query(dialect)
 
-        connection.execute(*query)
-        connection.execute("commit;")
+        connection.execute(*sqly_migrations_query)
+        connection.commit()
         print("OK")
 
     def insert_query(self, dialect: Dialect) -> Any:
