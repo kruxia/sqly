@@ -33,7 +33,7 @@ from typing import Any
 
 class ParamFormat(Enum):
     """
-    The output format for a given dialect.
+    The parameter format for a given database dialect.
     """
 
     # -- positional --
@@ -59,7 +59,7 @@ class ParamFormat(Enum):
 class Dialect(Enum):
     """
     Each Dialect is named for the adaptor (driver) interface that it uses and
-    encapsulates the options that interface uses for such things as query parameter
+    encapsulates the options that adaptor uses for such things as query parameter
     formatting.
     """
 

@@ -75,10 +75,10 @@ class SQL:
 
         Returns:
             (str): the rendered query string.
-            (tuple | dict): depends on the output format:
+            (tuple | dict): depends on the param format:
 
-                - positional output formats (QMARK, NUMBERED) return a tuple of values
-                - named output formats (NAMED, PYFORMAT) return a dict
+                - positional param formats (QMARK, NUMBERED) return a tuple of values
+                - named param formats (NAMED, PYFORMAT) return a dict
         """
         # ordered list of fields for positional outputs (closure for replace_parameter)
         fields = []
@@ -90,7 +90,7 @@ class SQL:
             if self.dialect.param_format.is_positional or field not in fields:
                 fields.append(field)
 
-            # Return the field formatted for the output type
+            # Return the field formatted for the param format type
             if self.dialect.param_format == ParamFormat.NAMED:
                 return f":{field}"
             elif self.dialect.param_format == ParamFormat.PYFORMAT:
@@ -110,7 +110,7 @@ class SQL:
         else:
             raise ValueError(f"Query has unsupported type: {type(query)}")
 
-        # 2. Escape string parameters in the PYFORMAT output format
+        # 2. Escape string parameters in the PYFORMAT param format
         if self.dialect.param_format == ParamFormat.PYFORMAT:
             # any % must be intended as literal and must be doubled
             query_str = query_str.replace("%", "%%")
