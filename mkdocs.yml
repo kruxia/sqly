@@ -1,5 +1,10 @@
 site_name: SQLY
 site_url: https://kruxia.github.io/sqly
+repo_name: kruxia/sqly
+repo_url: https://github.com/kruxia/sqly
+copyright: Copyright © 2023 by <a href="https://github.com/kruxia" target="_blank">Kruxia</a>.
+watch:
+  - sqly
 theme:
     name: material
     features:
@@ -9,7 +14,8 @@ plugins:
   - mkdocstrings
   - search
 markdown_extensions:
-  - attr_list
+  - extra
+  - mkdocs-click
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -17,11 +23,7 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
-  - extra
   - smarty
-  - mkdocs-click
-repo_name: kruxia/sqly
-repo_url: https://github.com/kruxia/sqly
-copyright: Copyright © 2023 by <a href="https://github.com/kruxia" target="_blank">Kruxia</a>.
-watch:
-  - sqly
+  - toc:
+      permalink: true
+      permalink_title: Anchor link to this section
