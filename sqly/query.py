@@ -29,7 +29,7 @@ class Q:
 
         Arguments:
             fields (Iterable): An iterable of field names. (Can be a Mapping with field
-            names as keys.)
+                names as keys.)
 
         Returns:
             (list): A list of field names
@@ -48,7 +48,7 @@ class Q:
 
         Arguments:
             fields (Iterable): An iterable of field names. (Can be a Mapping with field
-            names as keys.)
+                names as keys.)
 
         Returns:
             (str): A comma-separated string of field names
@@ -67,7 +67,7 @@ class Q:
 
         Arguments:
             fields (Iterable): An iterable of field names. (Can be a Mapping with field
-            names as keys.)
+                names as keys.)
 
         Returns:
             (str): A comma-separated string of field names
@@ -86,7 +86,7 @@ class Q:
 
         Arguments:
             fields (Iterable): An iterable of field names. (Can be a Mapping with field
-            names as keys.)
+                names as keys.)
 
         Returns:
             (str): A comma-separated string of field `key = :key` assignments

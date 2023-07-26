@@ -304,7 +304,7 @@ class Migration:
 
         Arguments:
             connection (Any): A database connection. dialect (Dialect): The SQL database
-            dialect. migration (Migration): The Migration that we are migrating _to_.
+            migration (Migration): The Migration that we are migrating _to_.
             dryrun (bool): Whether this is a dry run.
         """
         db_migrations = cls.database_migrations(connection, dialect)

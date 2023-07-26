@@ -24,10 +24,10 @@ class SQL:
 
     **Methods:**
 
-    * [render()](.#sqly.sql.SQL.render): Render a query and accompanying data to
+    * [render()](./#sqly.sql.SQL.render): Render a query and accompanying data to
       database Dialect-native form.
-    * [execute()](.#sqly.sql.SQL.execute): Execute a query on the given connection.
-    * [select()](.#sqly.sql.SQL.select): Execute a query and select the results as
+    * [execute()](./#sqly.sql.SQL.execute): Execute a query on the given connection.
+    * [select()](./#sqly.sql.SQL.select): Execute a query and select the results as
         record objects.
 
     Examples:
