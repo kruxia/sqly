@@ -30,6 +30,7 @@ if __name__ == "__main__":
             "docs": [
                 "mkdocs~=1.4.3",
                 "mkdocs-autorefs~=0.4.1",
+                "mkdocs-click~=0.8.0",
                 "mkdocs-material~=9.1.19",
                 "mkdocs-material-extensions~=1.1.1",
                 "mkdocstrings~=0.22.0",
