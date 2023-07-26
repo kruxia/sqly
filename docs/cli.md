@@ -1,8 +1,14 @@
 # CLI Usage
 
-This page provides documentation for the sqly command line command.
+This page provides documentation for the sqly command line command. 
 
-The migration tools are both simple to use and very flexible. An example usage session:
+The sqly migration tools are both simple to use and very flexible. 
+
+* [sqly migrate](#sqly-migrate) = migrate the database
+* [sqly migration](#sqly-migration) = create a new migration
+* [sqly migrations](#sqly-migrations) = list the migrations
+
+An example usage session:
 
 ```sh
 # First, create a new migration file
