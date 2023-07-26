@@ -3,6 +3,7 @@
 name: Publish to PyPI
 on:
   release:
+    types: [released,prereleased]
 
 jobs:
   publish:
@@ -16,7 +17,7 @@ jobs:
     
     - name: Update version in setup.json
       shell: python
-      run: >-
+      run: |-
         import os, json, pathlib
         PATH = pathlib.Path(__name__).absolute().parent
         setup_data = PATH / "setup.json"
@@ -27,7 +28,7 @@ jobs:
             f.write(json.dumps(setup_data, indent=2))
     
     - name: Build a binary wheel
-      run: >-
+      run: |-
         python -m pip install wheel
         python setup.py sdist bdist_wheel
     
