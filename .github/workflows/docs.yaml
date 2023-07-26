@@ -23,7 +23,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup Pages
-        run: pip install -e .[docs,migration]
+        run: pip install -e .[docs]
       - name: Build with Mkdocs
         run: mkdocs build
       - name: Upload artifact

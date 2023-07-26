@@ -28,6 +28,7 @@ if __name__ == "__main__":
                 "twine~=4.0.2",
             ],
             "docs": [
+                "sqly[migration]",
                 "mkdocs~=1.4.3",
                 "mkdocs-autorefs~=0.4.1",
                 "mkdocs-click~=0.8.0",
