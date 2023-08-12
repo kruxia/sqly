@@ -7,3 +7,4 @@ sqly.egg-info/
 sqly/__pycache__/
 dist/
 build/
+sqly/__version__.py
