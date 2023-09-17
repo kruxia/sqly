@@ -7,9 +7,9 @@ watch:
   - sqly
 theme:
     name: material
-    features:
-    - content.code.annotate
-    - content.code.copy
+    # features:
+    # - content.code.annotate
+    # - content.code.copy
 plugins:
   - mkdocstrings
   - search

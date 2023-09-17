@@ -57,8 +57,8 @@ class Migration:
         depends (list[str]): A list of migrations (keys) that this migration depends on.
         applied (Optional[datetime]): If the migration has been applied, the datetime.
         doc (Optional[str]): A document string describing the migration.
-        up (Optional[str]): SQL implmenting the "up" or "forward" migration.
-        dn (Optional[str]): SQL implementing the "down" or "reverse" migration.
+        up (list[str]): a list of SQL statements implementing the "forward" migration.
+        dn (list[str]): a list of SQL statements implementing the "reverse" migration.
     """
 
     app: str
