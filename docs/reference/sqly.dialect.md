@@ -1,2 +1,2 @@
 # sqly.dialect
-::: sqly.dialect
+<!-- ::: sqly.dialect -->

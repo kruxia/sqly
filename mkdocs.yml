@@ -6,7 +6,7 @@ copyright: Copyright © 2023 by <a href="https://github.com/kruxia" target="_bla
 watch:
   - sqly
 theme:
-    name: readthedocs
+    name: material
     features:
     - content.code.annotate
     - content.code.copy
