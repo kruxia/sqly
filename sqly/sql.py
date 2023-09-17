@@ -173,9 +173,11 @@ class SQL:
         except Exception as exc:
             # If the connection is a cursor, get the underlying connection to rollback,
             # because cursors don't have a rollback method.
-            if hasattr(connection, "connection"):
-                connection = connection.connection
-            connection.rollback()
+            if hasattr(connection, "rollback"):
+                try:
+                    connection.rollback()
+                except Exception:
+                    ...
             raise exc
 
         return cursor
@@ -238,9 +240,11 @@ class AsyncSQL(SQL):
         except Exception as exc:
             # If the connection is a cursor, get the underlying connection to rollback,
             # because cursors don't have a rollback method.
-            if hasattr(connection, "connection"):
-                connection = connection.connection
-            await connection.rollback()
+            if hasattr(connection, "rollback"):
+                try:
+                    await connection.rollback()
+                except Exception:
+                    ...
             raise exc
 
         return cursor
