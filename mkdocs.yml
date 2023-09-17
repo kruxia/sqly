@@ -12,7 +12,7 @@ theme:
     # - content.code.copy
 plugins:
   - mkdocstrings
-  - search
+  # - search
 markdown_extensions:
   - extra
   - mkdocs-click
