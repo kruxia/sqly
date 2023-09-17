@@ -90,8 +90,8 @@ def test_execute_invalid_rollback(dialect_name, database_url):
         # execute an invalid query
         insert_query = "INSERT INTO widgets (id, sku) VALUES (:id, :sku)"
         widget = {"id": 1, "sku": "COG-01"}
+        # table widgets doesn't exist
         with pytest.raises(Exception):
-            # table widgets doesn't exist
             sql.execute(connection, insert_query, widget)
 
         # the connection is ready for the next queries

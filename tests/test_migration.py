@@ -54,11 +54,11 @@ def test_migration_init(item):
     assert m.app == item["app"]
     assert isinstance(m.ts, int)
     assert m.name == item.get("name", "")
-    assert m.depends == list(item.get("depends") or [])
+    assert m.depends == list(item.get("depends", []))
     assert m.applied == item.get("applied", None)
     assert m.doc == item.get("doc", None)
-    assert m.up == item.get("up", None)
-    assert m.dn == item.get("dn", None)
+    assert m.up == item.get("up", [])
+    assert m.dn == item.get("dn", [])
     r = repr(m)
     assert "key=" in r
     assert m.key in r

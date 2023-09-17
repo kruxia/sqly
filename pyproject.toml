@@ -7,4 +7,3 @@ dynamic = ["version"]
 
 [tool.setuptools_scm]
 write_to = "sqly/__version__.py"
-

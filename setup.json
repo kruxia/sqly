@@ -1,6 +1,6 @@
 {
   "name": "sqly",
-  "version": "0.8.0",
+  "version": "0.10.0",
   "description": "Write SQL in SQL",
   "url": "https://github.com/kruxia/sqly",
   "author": "Sean Harrison",

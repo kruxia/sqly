@@ -1,4 +1,5 @@
 import os
+import shutil
 from glob import glob
 from pathlib import Path
 
@@ -80,7 +81,7 @@ def test_main_migrations(cli_runner):
 
         # listing testapp migrations without dependencies does not include sqly
         result = cli_runner.invoke(__main__.migrations, ["testapp"])
-        print(f"{result.output=}")
+        print(f"result.output", result.output)
         assert all([(path in result.output) for path in testapp_migration_keys])
         assert not any([(path in result.output) for path in sqly_migration_keys])
 
@@ -111,8 +112,9 @@ def test_main_migrate(cli_runner, dialect_name, database_url):
         m_key = f"testapp:{m_path.stem}"
         with open(m_path) as f:
             m_data = yaml.safe_load(f)
-        m_data["up"] = "CREATE TABLE widgets (id int, sku varchar)"
-        m_data["dn"] = "DROP TABLE widgets"
+        m_data["up"] = ["CREATE TABLE widgets (id int, sku varchar);"]
+        m_data["dn"] = ["DROP TABLE widgets;"]
+        print(yaml.dump(m_data))
         with open(m_path, "w") as f:
             f.write(yaml.dump(m_data))
 
@@ -120,6 +122,7 @@ def test_main_migrate(cli_runner, dialect_name, database_url):
         result = cli_runner.invoke(
             __main__.migrate, [m_key, "-u", database_url, "-d", dialect_name]
         )
+        print(f"up: {result.exit_code=}")
         assert result.exit_code == 0
         assert m_key in result.output
 
@@ -132,7 +135,16 @@ def test_main_migrate(cli_runner, dialect_name, database_url):
         result = cli_runner.invoke(
             __main__.migrate, [sqly_init_key, "-u", database_url, "-d", dialect_name]
         )
+        print(f"dn: {result.exit_code=}")
         assert result.exit_code == 0
+
+    except:
+        # # copy the database file
+        # db_file = database_url.split("file://")[-1] if "file://" in database_url else ""
+        # if os.path.exists(db_file):
+        #     shutil.copy(db_file, db_file + '_test_main_migrate.db')
+
+        raise
 
     finally:
         # clean up testapp migrations

@@ -67,21 +67,21 @@ class Migration:
     depends: list[str] = field(default_factory=list)
     applied: Optional[datetime] = None
     doc: Optional[str] = None
-    up: Optional[str] = None
-    dn: Optional[str] = None
+    up: list[str] = field(default_factory=list)
+    dn: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         # replace non-word characters in the name with an underscore
         self.name = re.sub(r"[\W_]+", "_", self.name or "")
 
-        # ensure that depends is a list
-        if self.depends:
-            if isinstance(self.depends, str):
-                self.depends = json.loads(self.depends)
+        # ensure that list attributes are lists (such as when loaded from sqlite3)
+        for key in ["depends", "up", "dn"]:
+            if not self.__dict__[key]:
+                self.__dict__[key] = []
+            elif isinstance(self.__dict__[key], str):
+                self.__dict__[key] = json.loads(self.__dict__[key])
             else:
-                self.depends = list(self.depends)
-        else:
-            self.depends = []
+                self.__dict__[key] = list(self.__dict__[key])
 
     def __repr__(self) -> str:
         return (
@@ -131,7 +131,7 @@ class Migration:
         return f"{self.ts}_{self.name}.yaml"
 
     @classmethod
-    def load(cls, filepath: str) -> Migration:
+    def load(cls, filepath: Path) -> Migration:
         """
         Load the migration at the given file path.
         """
@@ -241,14 +241,13 @@ class Migration:
             app=app,
             name=name,
             depends=depends,
-            doc=None,
-            up=None,
-            dn=None,
         )
         return migration
 
     @classmethod
-    def database_migrations(cls, connection: Any, dialect: Dialect) -> Dict[str, Migration]:
+    def database_migrations(
+        cls, connection: Any, dialect: Dialect
+    ) -> Dict[str, Migration]:
         """
         Query the database with the given `connection` and return a dict of the
         Migrations in the database, by key. If no Migrations have been applied in the
@@ -457,9 +456,10 @@ class Migration:
             print("DRY RUN")
             return
 
-        migration_query = getattr(self, direction)
-        if migration_query:
-            connection.execute(migration_query)
+        migration_queries = getattr(self, direction)
+        if migration_queries:
+            for migration_query in migration_queries:
+                connection.execute(migration_query)
 
         if direction == "up":
             sqly_migrations_query = self.insert_query(dialect)
@@ -483,6 +483,8 @@ class Migration:
         """
         data = {k: v for k, v in self.dict(exclude_none=True).items()}
         data["depends"] = json.dumps(data.get("depends") or [])
+        data["up"] = json.dumps(data.get("up") or [])
+        data["dn"] = json.dumps(data.get("dn") or [])
         sql = queries.INSERT("sqly_migrations", data)
         return SQL(dialect=dialect).render(sql, data)
 

@@ -8,19 +8,21 @@ doc: >-
   entirely in the database, so that (for example) the database can be migrated down even
   if we're on a git branch where some migrations don't exist in the code.
 
-up: |-
-  CREATE TABLE sqly_migrations (
-    app         varchar NOT NULL,
-    ts          bigint  NOT NULL,
-    name        varchar NOT NULL DEFAULT '',
-    
-    depends     jsonb DEFAULT '[]',
-    applied     timestamptz DEFAULT current_timestamp,
-    doc         text,
-    up          text,   -- 'up' sql 
-    dn          text,   -- 'down' sql
+up: 
+  - |-
+    CREATE TABLE sqly_migrations (
+      app         varchar NOT NULL,
+      ts          bigint  NOT NULL,
+      name        varchar NOT NULL DEFAULT '',
+      
+      depends     jsonb DEFAULT '[]',
+      applied     timestamptz DEFAULT current_timestamp,
+      doc         text,
+      up          jsonb DEFAULT '[]',   -- 'up' sql 
+      dn          jsonb DEFAULT '[]',   -- 'down' sql
+  
+      PRIMARY KEY (app, ts, name)
+    );
 
-    PRIMARY KEY (app, ts, name)
-  );
-
-dn: DROP TABLE sqly_migrations;
+dn: 
+  - DROP TABLE sqly_migrations;

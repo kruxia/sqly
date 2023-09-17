@@ -27,14 +27,16 @@ name: products
 depends:
 - sqly:20211105034808482_init
 doc: null
-up: |-
-  CREATE TABLE products (
-    id        integer PRIMARY KEY AUTOINCREMENT,
-    name      varchar NOT NULL,
-    sku       varchar NOT NULL UNIQUE,
-    created   datetime DEFAULT current_timestamp
-  )
-dn: DROP TABLE products
+up: 
+  - |-
+    CREATE TABLE products (
+        id        integer PRIMARY KEY AUTOINCREMENT,
+        name      varchar NOT NULL,
+        sku       varchar NOT NULL UNIQUE,
+        created   datetime DEFAULT current_timestamp
+    );
+dn: 
+  - DROP TABLE products;
 ```
 
 Now we can apply the migration using the migration key,
