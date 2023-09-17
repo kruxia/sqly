@@ -12,19 +12,19 @@ theme:
     # - content.code.copy
 plugins:
   - mkdocstrings
-  # - search
+#   - search
 markdown_extensions:
-  - extra
+#   - extra
   - mkdocs-click
-  - pymdownx.highlight:
-      anchor_linenums: true
-      line_spans: __span
-      linenums: false
-      pygments_lang_class: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.superfences
-  - smarty
-  - toc:
-      permalink: true
-      permalink_title: Anchor link to this section
+#   - pymdownx.highlight:
+#       anchor_linenums: true
+#       line_spans: __span
+#       linenums: false
+#       pygments_lang_class: true
+#   - pymdownx.inlinehilite
+#   - pymdownx.snippets
+#   - pymdownx.superfences
+#   - smarty
+#   - toc:
+#       permalink: true
+#       permalink_title: Anchor link to this section
