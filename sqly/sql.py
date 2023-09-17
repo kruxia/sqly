@@ -213,4 +213,59 @@ class SQL:
         cursor = self.execute(connection, query, data)
         fields = [d[0] for d in cursor.description]
         for row in cursor:
-            yield Constructor(zip(fields, row))
+            yield Constructor(**dict(zip(fields, row)))
+
+    def select_one(
+        self,
+        connection: Any,
+        query: str | Iterator,
+        data: Optional[Mapping] = None,
+        Constructor=dict,
+    ):
+        records = self.select(
+            connection=connection, query=query, data=data, Constructor=Constructor
+        )
+        for record in records:
+            return record
+
+
+class AsyncSQL(SQL):
+    async def execute(
+        self, connection: Any, query: str | Iterator, data: Optional[Mapping] = None
+    ):
+        try:
+            cursor = await connection.execute(*self.render(query, data))
+        except Exception as exc:
+            # If the connection is a cursor, get the underlying connection to rollback,
+            # because cursors don't have a rollback method.
+            if hasattr(connection, "connection"):
+                connection = connection.connection
+            await connection.rollback()
+            raise exc
+
+        return cursor
+
+    async def select(
+        self,
+        connection: Any,
+        query: str | Iterator,
+        data: Optional[Mapping] = None,
+        Constructor=dict,
+    ):
+        cursor = await self.execute(connection, query, data)
+        fields = [d[0] for d in cursor.description]
+        async for row in cursor:
+            yield Constructor(**dict(zip(fields, row)))
+
+    async def select_one(
+        self,
+        connection: Any,
+        query: str | Iterator,
+        data: Optional[Mapping] = None,
+        Constructor=dict,
+    ):
+        records = self.select(
+            connection=connection, query=query, data=data, Constructor=Constructor
+        )
+        async for record in records:
+            return record
