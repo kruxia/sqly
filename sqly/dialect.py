@@ -11,6 +11,7 @@ Definitions for different dialects of SQL databases. Each
 Examples:
     List the supported Dialects:
     >>> for dialect in Dialect.__members__.values(): print(repr(dialect))
+    <Dialect.ASYNCPG: 'asyncpg'>
     <Dialect.PSYCOPG: 'psycopg'>
     <Dialect.SQLITE: 'sqlite'>
 
@@ -63,13 +64,13 @@ class Dialect(Enum):
     formatting.
     """
 
+    ASYNCPG = "asyncpg"
     PSYCOPG = "psycopg"
     SQLITE = "sqlite"
     # --
     # MYSQL = "mysql"
     # PYODBC = "pyodbc"
     # # --
-    # ASYNCPG = "asyncpg"
     # DATABASES = "databases"
     # SQLALCHEMY = "sqlalchemy"
     # PSYCOPG2 = "psycopg2"
@@ -78,13 +79,13 @@ class Dialect(Enum):
     def param_format(self) -> ParamFormat:
         """The [ParamFormat](./#sqly.dialect.ParamFormat) for this Dialect."""
         return {
+            "asyncpg": ParamFormat.NUMBERED,
             "psycopg": ParamFormat.PYFORMAT,
             "sqlite": ParamFormat.QMARK,
             # --
             # "mysql": ParamFormat.FORMAT,
             # "pyodbc": ParamFormat.QMARK,
             # # --
-            # "asyncpg": ParamFormat.NUMBERED,
             # "databases": ParamFormat.NAMED,
             # "sqlalchemy": ParamFormat.PYFORMAT,
             # "psycopg2": ParamFormat.PYFORMAT,
@@ -94,13 +95,13 @@ class Dialect(Enum):
     def adaptor_name(self) -> str:
         """The name of the adaptor (driver module) to import for this Dialect."""
         return {
+            "asyncpg": "asyncpg",
             "psycopg": "psycopg",
             "sqlite": "sqlite3",
             # --
             # "mysql": "MySQLdb",
             # "pyodbc": "pyodbc",
             # # --
-            # "asyncpg": "asyncpg",
             # "databases": "databases",
             # "sqlalchemy": "sqlalchemy",
             # "psycopg2": "psycopg2",
@@ -113,3 +114,11 @@ class Dialect(Enum):
             (Any): A database adaptor (driver module).
         """
         return import_module(self.adaptor_name)
+
+    @property
+    def must_async(self) -> bool:
+        return self in [self.ASYNCPG]
+
+    @property
+    def can_async(self) -> bool:
+        return self in [self.ASYNCPG, self.PSYCOPG]

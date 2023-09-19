@@ -2,13 +2,14 @@
 The `sqly.__main__` module provides the `sqly` command line command. This is the code
 reference documentation; see the [CLI Usage](../cli.md) document for usage information.
 """
-# import json
+import asyncio
 import os
 import sys
 
 import click
 import networkx as nx
 
+from . import lib
 from .dialect import Dialect
 from .migration import Migration
 
@@ -84,13 +85,17 @@ def migrate(migration_key, database_url=None, dialect=None, dryrun=False):
         print("--dialect or env $DATABASE_DIALECT must be set", file=sys.stderr)
         sys.exit(1)
 
+    # force psycopg instead of asyncpg for migrations
+    if dialect == 'asyncpg':
+        dialect = 'psycopg'
+
     dialect = Dialect(dialect)
     adaptor = dialect.adaptor()
     # if dialect == Dialect.MYSQL:
     #     conn_info = json.loads(database_url)
     #     connection = adaptor.connect(**conn_info)
     # else:
-    connection = adaptor.connect(database_url)
+    connection = lib.run(adaptor.connect(database_url))
 
     migration = Migration.key_load(migration_key)
     Migration.migrate(connection, dialect, migration, dryrun=dryrun)

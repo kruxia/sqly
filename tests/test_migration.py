@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 import sqly
-from sqly import Dialect, migration
+from sqly import Dialect, lib, migration
 from tests import fixtures
 
 package_path = Path(os.path.abspath(sqly.__file__)).parent.parent
@@ -147,7 +147,7 @@ def test_migration_migrate(dialect_name, database_url):
         #     conn_info = json.loads(database_url)
         #     connection = adaptor.connect(**conn_info)
         # else:
-        connection = adaptor.connect(database_url)
+        connection = lib.run(adaptor.connect(database_url))
         assert not migration.Migration.database_migrations(connection, dialect)
         m = migration.Migration.key_load(EXISTING_MIGRATION_KEYS[0])
         migration.Migration.migrate(connection, dialect, m)
@@ -155,14 +155,14 @@ def test_migration_migrate(dialect_name, database_url):
     finally:
         # clean up tables
         try:
-            connection.execute("DROP TABLE widgets")
-            connection.commit()
+            lib.run(connection.execute("DROP TABLE widgets"))
+            lib.run(connection.commit())
         except Exception:
             ...
 
         try:
-            connection.execute("DROP TABLE sqly_migrations")
-            connection.commit()
+            lib.run(connection.execute("DROP TABLE sqly_migrations"))
+            lib.run(connection.commit())
         except Exception:
             ...
 

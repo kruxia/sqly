@@ -16,10 +16,10 @@ from typing import AbstractSet, Any, Dict, ForwardRef, Mapping, Optional
 import networkx as nx
 import yaml
 
-from . import queries
+from . import queries, lib
 from .dialect import Dialect
 from .query import Q
-from .sql import SQL
+from .sql import ASQL, SQL
 
 # enable repeatable UUID-as-hash for migration keys by using the repo as the namespace.
 SQLY_UUID_NAMESPACE = uuid.uuid3(uuid.NAMESPACE_URL, "https://github.com/kruxia/sqly")
@@ -259,10 +259,13 @@ class Migration:
         Returns:
             migrations (dict[str, Migration]): A dict of Migrations by key.
         """
-        sql = SQL(dialect=dialect)
+        if dialect.must_async:
+            sql = ASQL(dialect=dialect)
+        else:
+            sql = SQL(dialect=dialect)
+
         try:
-            results = sql.select(connection, "select * from sqly_migrations")
-            records = list(results)
+            records = lib.gen(sql.select(connection, "select * from sqly_migrations"))
 
         except Exception as exc:
             print(str(exc))
@@ -459,15 +462,16 @@ class Migration:
         migration_queries = getattr(self, direction)
         if migration_queries:
             for migration_query in migration_queries:
-                connection.execute(migration_query)
+                lib.run(connection.execute(migration_query))
 
         if direction == "up":
             sqly_migrations_query = self.insert_query(dialect)
         else:
             sqly_migrations_query = self.delete_query(dialect)
 
-        connection.execute(*sqly_migrations_query)
-        connection.commit()
+        lib.run(connection.execute(*sqly_migrations_query))
+        lib.run(connection.commit())
+
         print("OK")
 
     def insert_query(self, dialect: Dialect) -> Any:

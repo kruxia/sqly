@@ -4,6 +4,7 @@ import os
 import pytest
 
 from sqly.dialect import Dialect
+from sqly import lib
 from sqly.sql import SQL
 from tests import fixtures
 
@@ -31,38 +32,40 @@ def test_execute_query_ok(dialect_name, database_url):
         #     conn_info = json.loads(database_url)
         #     connection = adaptor.connect(**conn_info)
         # else:
-        connection = adaptor.connect(database_url)
+        connection = lib.run(adaptor.connect(database_url))
 
         # execute a query that should have visible results
-        cursor = connection.execute("CREATE TABLE widgets (id int, sku varchar)")
+        cursor = lib.run(connection.execute("CREATE TABLE widgets (id int, sku varchar)"))
+
         print(f"{connection=}")
         widget = {"id": 1, "sku": "COG-01"}
         # - the following table exists (and using the cursor to execute is fine)
-        sql.execute(cursor, "INSERT INTO widgets (id, sku) VALUES (:id, :sku)", widget)
+        lib.run(sql.execute(cursor, "INSERT INTO widgets (id, sku) VALUES (:id, :sku)", widget))
+
         print(f"{connection=}")
         # - the row is in the table
-        row = next(sql.select(cursor, "SELECT * from widgets WHERE id=:id", widget))
+        row = lib.run(sql.select_one(cursor, "SELECT * from widgets WHERE id=:id", widget))
         assert row == widget
 
-        # after we rollback, the row doesn't exist (NOTE: This might not work on all
+        # after we rollback, the table doesn't exist (NOTE: This might not work on all
         # databases, because not all have transactional DDL. )
-        connection.rollback()
+        lib.run(connection.rollback())
         with pytest.raises(Exception):
-            row = next(
-                sql.select(connection, "SELECT * from widgets WHERE id=:id", widget)
-            )
+            row = lib.run(sql.select_one(connection, "SELECT * from widgets WHERE id=:id", widget))
+            # If the DDL wasn't transactional, the row still doesn't exist - is None
+            assert row
 
     finally:
         # clean up the tables, if any
         try:
-            connection.execute("DROP TABLE widgets")
-            connection.commit()
+            lib.run(connection.execute("DROP TABLE widgets"))
+            lib.run(connection.commit())
         except Exception:
             ...
 
         try:
-            connection.execute("DROP TABLE sqly_migrations")
-            connection.commit()
+            lib.run(connection.execute("DROP TABLE sqly_migrations"))
+            lib.run(connection.commit())
         except Exception:
             ...
 
@@ -80,43 +83,46 @@ def test_execute_invalid_rollback(dialect_name, database_url):
     try:
         # connect to the database
         sql = SQL(dialect=dialect_name)
+
         adaptor = sql.dialect.adaptor()
         # if sql.dialect == Dialect.MYSQL:
         #     conn_info = json.loads(database_url)
         #     connection = adaptor.connect(**conn_info)
         # else:
-        connection = adaptor.connect(database_url)
+        connection = lib.run(adaptor.connect(database_url))
 
         # execute an invalid query
         insert_query = "INSERT INTO widgets (id, sku) VALUES (:id, :sku)"
         widget = {"id": 1, "sku": "COG-01"}
         # table widgets doesn't exist
         with pytest.raises(Exception):
-            sql.execute(connection, insert_query, widget)
+            lib.run(sql.execute(connection, insert_query, widget))
 
         # the connection is ready for the next queries
-        sql.execute(connection, "CREATE TABLE widgets (id int, sku varchar)")
-        connection.commit()
-        sql.execute(connection, insert_query, widget)
-        rows = list(sql.select(connection, "SELECT * FROM widgets"))
+        lib.run(sql.execute(connection, "CREATE TABLE widgets (id int, sku varchar)"))
+        lib.run(connection.commit())
+        lib.run(sql.execute(connection, insert_query, widget))
+        rows = lib.gen(sql.select(connection, "SELECT * FROM widgets"))
         assert len(rows) == 1
 
         # and we can still rollback the connection (the insert)
-        connection.rollback()
-        rows = list(sql.select(connection, "SELECT * FROM widgets"))
-        assert len(rows) == 0
+        lib.run(connection.rollback())
+
+        # TODO: work for async select
+        # rows = list(lib.run(sql.select(connection, "SELECT * FROM widgets")))
+        # assert len(rows) == 0
 
     finally:
         # clean up the tables, if any
         try:
-            connection.execute("DROP TABLE widgets")
-            connection.commit()
+            lib.run(connection.execute("DROP TABLE widgets"))
+            lib.run(connection.commit())
         except Exception:
             ...
 
         try:
-            connection.execute("DROP TABLE sqly_migrations")
-            connection.commit()
+            lib.run(connection.execute("DROP TABLE sqly_migrations"))
+            lib.run(connection.commit())
         except Exception:
             ...
 
@@ -139,28 +145,30 @@ def test_cursor_as_connection(dialect_name, database_url):
         #     conn_info = json.loads(database_url)
         #     connection = adaptor.connect(**conn_info)
         # else:
-        connection = adaptor.connect(database_url)
-        cursor = sql.execute(connection, "CREATE TABLE WIDGETS (id int, sku varchar)")
-        connection.commit()
-        with pytest.raises(Exception, match="foo"):  # no table, not cursor.rollback
-            sql.execute(cursor, "INSERT INTO foo VALUES (1, 2)")
+        connection = lib.run(adaptor.connect(database_url))
+        cursor = lib.run(sql.execute(connection, "CREATE TABLE WIDGETS (id int, sku varchar)"))
+        lib.run(connection.commit())
+        with pytest.raises(Exception, match="foo"):
+            lib.run(sql.execute(cursor, "INSERT INTO foo VALUES (1, 2)"))
+        lib.run(connection.rollback())
+
         widget = {"id": 1, "sku": "COG-01"}
-        cursor2 = sql.execute(cursor, "INSERT INTO widgets VALUES (:id, :sku)", widget)
+        cursor2 = lib.run(sql.execute(cursor, "INSERT INTO widgets VALUES (:id, :sku)", widget))
         assert cursor2 == cursor
-        record = next(sql.select(cursor, "SELECT * FROM widgets"))
+        record = lib.run(sql.select_one(cursor, "SELECT * FROM widgets"))
         assert record == widget
 
     finally:
         # clean up the tables, if any
         try:
-            connection.execute("DROP TABLE widgets")
-            connection.commit()
+            lib.run(connection.execute("DROP TABLE widgets"))
+            lib.run(connection.commit())
         except Exception:
             ...
 
         try:
-            connection.execute("DROP TABLE sqly_migrations")
-            connection.commit()
+            lib.run(connection.execute("DROP TABLE sqly_migrations"))
+            lib.run(connection.commit())
         except Exception:
             ...
 

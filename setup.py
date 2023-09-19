@@ -43,14 +43,15 @@ if __name__ == "__main__":
                 "flake8~=6.0.0",
                 "mypy",
                 "pytest~=7.3.1",
+                "pytest-asyncio~=0.21.1",
                 "pytest-click~=1.1.0",
                 "pytest-cov~=4.0.0",
                 # all the supported adaptors have to be installed to test
+                "asyncpg~=0.28.0",
                 "psycopg[binary]~=3.1.9",
                 # "mysqlclient~=2.2.0",
                 # # TODO: Remove these???
                 # "SQLAlchemy~=1.4.49",
-                # "asyncpg~=0.28.0",
                 # "databases~=0.7.0",
             ],
             "migration": [
@@ -62,6 +63,9 @@ if __name__ == "__main__":
             "psycopg": [
                 "psycopg[binary]~=3.1.9",
             ],
+            "asyncpg": [
+                "asyncpg~=0.28.0",
+            ]
             # "mysql": [
             #     "mysqlclient~=2.2.0",
             # ]

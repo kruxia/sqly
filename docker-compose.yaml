@@ -29,7 +29,7 @@ services:
   #     - /var/lib/mysql:/var/lib/mysql
 
   postgres:
-    image: postgres:15
+    image: postgres:16
     environment:
       POSTGRES_DB: testapp
       POSTGRES_USER: postgres

@@ -6,11 +6,11 @@ from tests import fixtures
 
 def get_query_params(sql, q, data=None):
     result = sql.render(q, data or {})
-    # if sql.dialect == Dialect.ASYNCPG:
-    #     query = result[0]
-    #     params = result[1:]
-    # else:
-    query, params = result
+    if sql.dialect == Dialect.ASYNCPG:
+        query = result[0]
+        params = result[1:]
+    else:
+        query, params = result
 
     return query, params
 

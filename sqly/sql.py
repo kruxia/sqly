@@ -139,12 +139,12 @@ class SQL:
             }
 
         # 6. Return a tuple formatted for this Dialect
-        # if self.dialect == Dialect.ASYNCPG:
-        # asyncpg expects the parameters in a tuple following the query string.
-        # return tuple([query_str] + parameter_values)
-        # else:
-        # other dialects expect the parameters in the second tuple item.
-        return (query_str, parameter_values)
+        if self.dialect == Dialect.ASYNCPG:
+            # asyncpg expects the parameters in a tuple following the query string.
+            return tuple([query_str] + parameter_values)
+        else:
+            # other dialects expect the parameters in the second tuple item.
+            return (query_str, parameter_values)
 
     def execute(
         self, connection: Any, query: str | Iterator, data: Optional[Mapping] = None
@@ -231,7 +231,7 @@ class SQL:
             return record
 
 
-class AsyncSQL(SQL):
+class ASQL(SQL):
     async def execute(
         self, connection: Any, query: str | Iterator, data: Optional[Mapping] = None
     ):
