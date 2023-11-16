@@ -57,7 +57,7 @@ def SELECT(
     return " ".join(query)
 
 
-def INSERT(relation: str, data: Iterable) -> str:
+def INSERT(relation: str, data: Iterable, returning=False) -> str:
     """
     Build an INSERT query with the following form:
     ```sql
@@ -76,20 +76,22 @@ def INSERT(relation: str, data: Iterable) -> str:
         f"({Q.fields(data)})",
         f"VALUES ({Q.params(data)})",
     ]
+    if returning is True:
+        query.append("RETURNING *")
     return " ".join(query)
 
 
-def UPDATE(relation: str, data: Iterable, filters: Iterable[str]) -> str:
+def UPDATE(relation: str, fields: Iterable, filters: Iterable[str]) -> str:
     """
     Build an UPDATE query with the following form:
     ```sql
     UPDATE relation
-    SET (assigns(data))
+    SET (assigns(fields))
     WHERE (filters)
     ```
     Arguments:
         relation (str): The name of the table to UPDATE.
-        data (Iterable): An iterable representing field names to update.
+        fields (Iterable): An iterable representing field names to update.
         filters (Iterable): An iterable of strings represent WHERE filters. At least one
             filter is required.
 
@@ -98,10 +100,22 @@ def UPDATE(relation: str, data: Iterable, filters: Iterable[str]) -> str:
     """
     query = [
         f"UPDATE {relation}",
-        f"SET {Q.assigns(data)}",
+        f"SET {Q.assigns(fields)}",
         f"WHERE {' AND '.join(filters)}",
     ]
     return " ".join(query)
+
+
+def UPSERT(relation: str, fields: Iterable[str], key: Iterable[str], returning=False) -> str:
+    query = [
+        INSERT(relation, fields, returning=False),
+        f"ON CONFLICT ({Q.fields(key)})",
+        f"DO UPDATE SET {Q.assigns(fields)}",
+    ]
+    if returning is True:
+        query.append("RETURNING *")
+    return " ".join(query)
+
 
 
 def DELETE(relation: str, filters: Iterable[str]) -> str:

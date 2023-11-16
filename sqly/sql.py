@@ -5,6 +5,8 @@ from typing import Any, Iterator, Mapping, Optional
 
 from .dialect import Dialect, ParamFormat
 from .lib import walk
+from .query import Q
+from . import queries
 
 
 @dataclass
@@ -60,6 +62,8 @@ class SQL:
     """
 
     dialect: Dialect
+    queries = queries
+    Q = Q
 
     def __post_init__(self):
         if not isinstance(self.dialect, Dialect):
@@ -230,6 +234,19 @@ class SQL:
         for record in records:
             return record
 
+    def select_all(
+        self,
+        connection: Any,
+        query: str | Iterator,
+        data: Optional[Mapping] = None,
+        Constructor=dict,
+    ):
+        return list(
+            self.select(
+                connection=connection, query=query, data=data, Constructor=Constructor
+            )
+        )
+
 
 class ASQL(SQL):
     async def execute(
@@ -273,3 +290,18 @@ class ASQL(SQL):
         )
         async for record in records:
             return record
+
+    async def select_all(
+        self,
+        connection: Any,
+        query: str | Iterator,
+        data: Optional[Mapping] = None,
+        Constructor=dict,
+    ):
+        records = []
+        async for record in self.select(
+            connection=connection, query=query, data=data, Constructor=Constructor
+        ):
+            records.append(record)
+
+        return records
