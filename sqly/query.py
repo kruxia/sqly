@@ -114,3 +114,10 @@ class Q:
             'id > :id'
         """
         return f"{field} {op} :{field}"
+
+    @classmethod
+    def ANY(cls, field):
+        """
+        Use ANY(...) for list parameters
+        """
+        return f"{field} = ANY(:{field})"
