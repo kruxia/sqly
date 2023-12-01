@@ -138,7 +138,8 @@ class SQL:
         else:
             # parameter_values is a dict of key:value fields
             parameter_values = {
-                key: json.dumps(val) if isinstance(val, (dict, list, tuple)) else val
+                # (dict, set, tuple) for json/b, but list is for "IN / ANY()" params.
+                key: json.dumps(val) if isinstance(val, (dict, set, tuple)) else val
                 for key, val in {field: data[field] for field in fields}.items()
             }
 
