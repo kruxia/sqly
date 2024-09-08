@@ -11,11 +11,11 @@ theme:
     - content.code.annotate
     - content.code.copy
 plugins:
-  # - mkdocstrings
+  - mkdocstrings
   - search
 markdown_extensions:
   - extra
-  # - mkdocs-click
+  - mkdocs-click
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
