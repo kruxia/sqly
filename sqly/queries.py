@@ -106,7 +106,9 @@ def UPDATE(relation: str, fields: Iterable, filters: Iterable[str]) -> str:
     return " ".join(query)
 
 
-def UPSERT(relation: str, fields: Iterable[str], key: Iterable[str], returning=False) -> str:
+def UPSERT(
+    relation: str, fields: Iterable[str], key: Iterable[str], returning=False
+) -> str:
     query = [
         INSERT(relation, fields, returning=False),
         f"ON CONFLICT ({Q.fields(key)})",
@@ -115,7 +117,6 @@ def UPSERT(relation: str, fields: Iterable[str], key: Iterable[str], returning=F
     if returning is True:
         query.append("RETURNING *")
     return " ".join(query)
-
 
 
 def DELETE(relation: str, filters: Iterable[str]) -> str:

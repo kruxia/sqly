@@ -85,8 +85,8 @@ def migrate(migration_key, database_url=None, dialect=None, dryrun=False):
         sys.exit(1)
 
     # force psycopg instead of asyncpg for migrations
-    if dialect == 'asyncpg':
-        dialect = 'psycopg'
+    if dialect == "asyncpg":
+        dialect = "psycopg"
 
     dialect = Dialect(dialect)
     adaptor = dialect.adaptor()

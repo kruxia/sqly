@@ -3,8 +3,8 @@ import os
 
 import pytest
 
-from sqly.dialect import Dialect
 from sqly import lib
+from sqly.dialect import Dialect
 from sqly.sql import SQL
 from tests import fixtures
 
@@ -35,23 +35,33 @@ def test_execute_query_ok(dialect_name, database_url):
         connection = lib.run(adaptor.connect(database_url))
 
         # execute a query that should have visible results
-        cursor = lib.run(connection.execute("CREATE TABLE widgets (id int, sku varchar)"))
+        cursor = lib.run(
+            connection.execute("CREATE TABLE widgets (id int, sku varchar)")
+        )
 
         print(f"{connection=}")
         widget = {"id": 1, "sku": "COG-01"}
         # - the following table exists (and using the cursor to execute is fine)
-        lib.run(sql.execute(cursor, "INSERT INTO widgets (id, sku) VALUES (:id, :sku)", widget))
+        lib.run(
+            sql.execute(
+                cursor, "INSERT INTO widgets (id, sku) VALUES (:id, :sku)", widget
+            )
+        )
 
         print(f"{connection=}")
         # - the row is in the table
-        row = lib.run(sql.select_one(cursor, "SELECT * from widgets WHERE id=:id", widget))
+        row = lib.run(
+            sql.select_one(cursor, "SELECT * from widgets WHERE id=:id", widget)
+        )
         assert row == widget
 
         # after we rollback, the table doesn't exist (NOTE: This might not work on all
         # databases, because not all have transactional DDL. )
         lib.run(connection.rollback())
         with pytest.raises(Exception):
-            row = lib.run(sql.select_one(connection, "SELECT * from widgets WHERE id=:id", widget))
+            row = lib.run(
+                sql.select_one(connection, "SELECT * from widgets WHERE id=:id", widget)
+            )
             # If the DDL wasn't transactional, the row still doesn't exist - is None
             assert row
 
@@ -146,14 +156,18 @@ def test_cursor_as_connection(dialect_name, database_url):
         #     connection = adaptor.connect(**conn_info)
         # else:
         connection = lib.run(adaptor.connect(database_url))
-        cursor = lib.run(sql.execute(connection, "CREATE TABLE WIDGETS (id int, sku varchar)"))
+        cursor = lib.run(
+            sql.execute(connection, "CREATE TABLE WIDGETS (id int, sku varchar)")
+        )
         lib.run(connection.commit())
         with pytest.raises(Exception, match="foo"):
             lib.run(sql.execute(cursor, "INSERT INTO foo VALUES (1, 2)"))
         lib.run(connection.rollback())
 
         widget = {"id": 1, "sku": "COG-01"}
-        cursor2 = lib.run(sql.execute(cursor, "INSERT INTO widgets VALUES (:id, :sku)", widget))
+        cursor2 = lib.run(
+            sql.execute(cursor, "INSERT INTO widgets VALUES (:id, :sku)", widget)
+        )
         assert cursor2 == cursor
         record = lib.run(sql.select_one(cursor, "SELECT * FROM widgets"))
         assert record == widget

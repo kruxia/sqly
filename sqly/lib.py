@@ -1,5 +1,6 @@
-import asyncio 
+import asyncio
 import inspect
+
 
 def walk(iterator):
     """
@@ -24,11 +25,12 @@ def run(f):
         f = asyncio.run(f)
     return f
 
+
 def gen(g):
     async def unasync(g):
         return [item async for item in g]
+
     if inspect.isasyncgen(g):
         return asyncio.run(unasync(g))
     else:
         return list(g)
-

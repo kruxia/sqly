@@ -17,7 +17,7 @@ from typing import AbstractSet, Any, Dict, ForwardRef, Mapping, Optional
 import networkx as nx
 import yaml
 
-from . import queries, lib
+from . import lib, queries
 from .dialect import Dialect
 from .query import Q
 from .sql import ASQL, SQL

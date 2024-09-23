@@ -3,10 +3,10 @@ import re
 from dataclasses import dataclass
 from typing import Any, Iterator, Mapping, Optional
 
+from . import queries
 from .dialect import Dialect, ParamFormat
 from .lib import walk
 from .query import Q
-from . import queries
 
 
 @dataclass

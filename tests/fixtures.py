@@ -36,7 +36,6 @@ test_databases = [
     ("sqlite", f"file://{PATH}/test.db"),
     ("psycopg", POSTGRESQL_URL),
     # ("asyncpg", POSTGRESQL_URL),
-
     # (
     #     "mysql",
     #     dedent(
