@@ -2,7 +2,6 @@
 The `sqly.__main__` module provides the `sqly` command line command. This is the code
 reference documentation; see the [CLI Usage](../cli.md) document for usage information.
 """
-import asyncio
 import os
 import sys
 

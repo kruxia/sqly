@@ -2,6 +2,7 @@
 Implementation of the sqly migration commands. See the [CLI Usage document](../cli.md)
 for more information about usage.
 """
+
 import json
 import os
 import re
@@ -69,6 +70,7 @@ class Migration:
     doc: Optional[str] = None
     up: list[str] = field(default_factory=list)
     dn: list[str] = field(default_factory=list)
+    data: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
 
     def __post_init__(self):
         # replace non-word characters in the name with an underscore
@@ -288,7 +290,8 @@ class Migration:
         Algorithm:
 
         1. Collate the list of applied migrations in the database with the list of
-           migrations available in this application.
+           migrations available in this application. Give precedence to the file
+           definitions in the application.
 
         2. Calculate the graph path to reach this migration and whether this is an "up"
            or "down" migration.
@@ -306,11 +309,12 @@ class Migration:
 
         Arguments:
             connection (Any): A database connection. dialect (Dialect): The SQL database
-            migration (Migration): The Migration that we are migrating _to_.
-            dryrun (bool): Whether this is a dry run.
+            migration (Migration): The Migration that we are migrating _to_. dryrun
+            (bool): Whether this is a dry run.
         """
         db_migrations = cls.database_migrations(connection, dialect)
-        migrations = db_migrations | cls.all_migrations(migration.app)
+        all_migrations = cls.all_migrations(migration.app)
+        migrations = db_migrations | all_migrations
         graph = cls.graph(migrations)
 
         if migration.key not in db_migrations:
@@ -466,7 +470,16 @@ class Migration:
 
         if direction == "up":
             sqly_migrations_query = self.insert_query(dialect)
+            # if there is data, load it
+            for table, records in self.data.items():
+                for record in records:
+                    query = SQL(dialect=dialect).render(
+                        queries.INSERT(table, record), record
+                    )
+                    lib.run(connection.execute(*query))
+
         else:
+            # TODO? if there is data, delete it?
             sqly_migrations_query = self.delete_query(dialect)
 
         lib.run(connection.execute(*sqly_migrations_query))
@@ -489,6 +502,8 @@ class Migration:
         data["depends"] = json.dumps(data.get("depends") or [])
         data["up"] = json.dumps(data.get("up") or [])
         data["dn"] = json.dumps(data.get("dn") or [])
+        if "data" in data:
+            data.pop("data")
         sql = queries.INSERT("sqly_migrations", data)
         return SQL(dialect=dialect).render(sql, data)
 
